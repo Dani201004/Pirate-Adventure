@@ -1,0 +1,144 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9620f8c34305754d8cc9a7e49e852d9, type: 3}
+  m_Name: Language table_en
+  m_EditorClassIdentifier: 
+  m_LocaleId:
+    m_Code: en
+  m_SharedData: {fileID: 11400000, guid: d3246f8aac07af345aec3ed2a0fcb25b, type: 2}
+  m_Metadata:
+    m_Items: []
+  m_TableData:
+  - m_Id: 52429611008
+    m_Localized: Continue
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7295640297472
+    m_Localized: New Game
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7297536122880
+    m_Localized: Avatar
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7299691995136
+    m_Localized: Credits
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7801985064960
+    m_Localized: Effects Volume
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7908683964416
+    m_Localized: Music Volume
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7980645638144
+    m_Localized: Language
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7966418558976
+    m_Localized: Music
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8060320636928
+    m_Localized: Settings
+    m_Metadata:
+      m_Items: []
+  - m_Id: 359800681291776
+    m_Localized: Enter ID....
+    m_Metadata:
+      m_Items: []
+  - m_Id: 359780754153472
+    m_Localized: Friends
+    m_Metadata:
+      m_Items: []
+  - m_Id: 359907245973504
+    m_Localized: Submit
+    m_Metadata:
+      m_Items: []
+  - m_Id: 359975550214144
+    m_Localized: Hats
+    m_Metadata:
+      m_Items: []
+  - m_Id: 360030927609856
+    m_Localized: Skin
+    m_Metadata:
+      m_Items: []
+  - m_Id: 360074074415104
+    m_Localized: Clothes
+    m_Metadata:
+      m_Items: []
+  - m_Id: 394555409850368
+    m_Localized: 'Name:'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 401757168230400
+    m_Localized: Enter Name....
+    m_Metadata:
+      m_Items: []
+  - m_Id: 406354645508096
+    m_Localized: Welcome
+    m_Metadata:
+      m_Items: []
+  - m_Id: 710126454202368
+    m_Localized: Saved Games
+    m_Metadata:
+      m_Items: []
+  - m_Id: 762538959331328
+    m_Localized: Warning
+    m_Metadata:
+      m_Items: []
+  - m_Id: 762578285125632
+    m_Localized: You have reached the limit of 10 saved games. Please delete some
+      to create more.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 762804349722624
+    m_Localized: 'Game Name:'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 794582053576704
+    m_Localized: 'Magic Gems:'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2176082737127424
+    m_Localized: Please enter a valid name.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2272637179682816
+    m_Localized: Loading...
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2554091419754496
+    m_Localized: Pause
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2554758678994944
+    m_Localized: Exit
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2729491101933568
+    m_Localized: Host Game
+    m_Metadata:
+      m_Items: []
+  - m_Id: 4345958998237184
+    m_Localized: "\rThe name cannot exceed 15 characters"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 4352441018245120
+    m_Localized: The name is already in use
+    m_Metadata:
+      m_Items: []
+  references:
+    version: 2
+    RefIds: []
