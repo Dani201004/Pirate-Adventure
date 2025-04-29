@@ -31,7 +31,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 7299691995136
-    m_Localized: Creditos
+    m_Localized: Como jugar
     m_Metadata:
       m_Items: []
   - m_Id: 7801985064960
@@ -132,11 +132,112 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 4345958998237184
-    m_Localized: El nombre no puede superar los 15 caracteres
+    m_Localized: El nombre no puede superar los 15 caracteres.
     m_Metadata:
       m_Items: []
   - m_Id: 4352441018245120
-    m_Localized: "El nombre ya est\xE1 en uso"
+    m_Localized: "El nombre ya est\xE1 en uso."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5516003765936128
+    m_Localized: No se ha encontrado un usuario con ese nombre.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5516956565004288
+    m_Localized: Se ha enviado la solicitud de amistad.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5518101740019712
+    m_Localized: Aceptar
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5518140038209536
+    m_Localized: Rechazar
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5518836380753920
+    m_Localized: Aviso
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7007948317155328
+    m_Localized: Control Parental
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7008412190400512
+    m_Localized: Tiempo de juego
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7009127075962880
+    m_Localized: Dificultad
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7010879149989888
+    m_Localized: Puzzles completados
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7039049806929920
+    m_Localized: Comenzar
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7044713912492032
+    m_Localized: Reiniciar
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9851159553269760
+    m_Localized: Reintentar
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9851802384883712
+    m_Localized: "\xBFReintentar?"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 10581116361400320
+    m_Localized: "\xA1Ahoy, amigo! Mira estos cofres del tesoro, \xA1est\xE1n bien
+      cerrados! Cada uno necesita una llave especial para abrirse. \xBFPuedes encontrar
+      la llave que va con cada cofre? \xA1Te dar\xE1 (nombre de la recompensa especial)!"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 10616613892808704
+    m_Localized: "\xA1Wow, eres un genio para emparejar colores! \xA1Aqu\xED tienes
+      un peque\xF1o loro para que se una a tu tripulaci\xF3n!"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 10928977645166592
+    m_Localized: Ya existe una partida guardada con ese nombre, usa otro.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 12324091449860096
+    m_Localized: "\xA1Excelente trabajo! Estas gemas har\xE1n que la nave se recargue.
+      \xA1Y mira... has ganado un brillante sombrero nuevo para tu avatar!"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 12324364167700480
+    m_Localized: "\xA1Psst! \xA1Por aqu\xED! La jungla escondi\xF3 mis gemas en estos
+      desafiantes rompecabezas deslizantes. \xBFPuedes mover las piezas para encontrarlas?
+      \xA1Mira con atenci\xF3n... los dibujos pueden darte pistas! \xA1Vamos a descubrir
+      un tesoro!"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 12324728522694656
+    m_Localized: "\xA1Ay no, la tormenta lo desorden\xF3 todo! Estas cajas necesitan
+      ser ordenadas: sombreros, herramientas y tesoros. \xBFPuedes poner cada cosa
+      en su lugar? \xA1Solo arrastra y suelta! \xA1Vamos a dejar todo bien ordenado!"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 12325011638214656
+    m_Localized: "\xA1Ordenaste de maravilla! La cabina del barco est\xE1 desbloqueada.
+      \xA1Tienes ojo de pirata para organizar!"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 12325283676577792
+    m_Localized: "\xA1Rayos! \xA1El puente est\xE1 roto! Tenemos que arreglarlo uniendo
+      las cuerdas correctas. \xBFVes el patr\xF3n? Rojo, azul, verde... \xA1como
+      un arco\xEDris pirata! \xBFPuedes reconstruirlo paso a paso?"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 12325667908378624
+    m_Localized: "\xA1Hurra! \xA1Has salvado el d\xEDa! Ahora podemos cruzar con
+      seguridad. \xA1Eres un verdadero pirata experto en resolver acertijos!"
     m_Metadata:
       m_Items: []
   references:

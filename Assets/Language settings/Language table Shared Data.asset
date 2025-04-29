@@ -28,7 +28,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 7299691995136
-    m_Key: Credits
+    m_Key: How to play
     m_Metadata:
       m_Items: []
   - m_Id: 8060320636928
@@ -129,11 +129,111 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 4345958998237184
-    m_Key: "\rThe name cannot exceed 15 characters"
+    m_Key: "\rThe name cannot exceed 15 characters."
     m_Metadata:
       m_Items: []
   - m_Id: 4352441018245120
-    m_Key: The name is already in use
+    m_Key: The name is already in use.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5516003765936128
+    m_Key: No user with that name found.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5516956565004288
+    m_Key: The friend request has been sent.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5518101740019712
+    m_Key: Accept
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5518140038209536
+    m_Key: Decline
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5518836380753920
+    m_Key: Notice
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7007948317155328
+    m_Key: Parental Control
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7008412190400512
+    m_Key: Game Time
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7009127075962880
+    m_Key: Difficulty
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7010879149989888
+    m_Key: "\rCompleted puzzles"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7039049806929920
+    m_Key: Start
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7044713912492032
+    m_Key: Reset
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9851159553269760
+    m_Key: Retry
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9851802384883712
+    m_Key: Retry?
+    m_Metadata:
+      m_Items: []
+  - m_Id: 10581116361400320
+    m_Key: Ahoy, matey! Look at these treasure chests--they're locked tight! Each
+      one needs a special key to open. Can you match the keys to the right chests?
+      It will give you (special reward name)
+    m_Metadata:
+      m_Items: []
+  - m_Id: 10616613892808704
+    m_Key: Wow You're a colour-matching wizard! Here's a little parrot friend to
+      join your crew!
+    m_Metadata:
+      m_Items: []
+  - m_Id: 10928977645166592
+    m_Key: A saved game already exists under that name, use another name.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 12324364167700480
+    m_Key: Psst! Over here! The jungle hid my gems in these tricky sliding puzzles.
+      Can you move the pieces to reveal them? Look closely--the patterns might help!
+      Let's uncover some treasure!
+    m_Metadata:
+      m_Items: []
+  - m_Id: 12324091449860096
+    m_Key: Splendid work! These gems will power up the ship. And look--you've earned
+      a shiny new hat for your avatar!
+    m_Metadata:
+      m_Items: []
+  - m_Id: 12324728522694656
+    m_Key: Oh dear, the storm scattered everything! These crates need sorting--hats,
+      tools, and treasures. Can you put each item where it belongs? Just drag and
+      drop! Let's tidy up!
+    m_Metadata:
+      m_Items: []
+  - m_Id: 12325011638214656
+    m_Key: Brilliant sorting! The ship's cabin is unlocked now. You've got a pirate's
+      eye for organizarion!
+    m_Metadata:
+      m_Items: []
+  - m_Id: 12325283676577792
+    m_Key: Blimey! The bridge is broken! We need to fix it by matching the ropes.
+      See the pattern? Red, blue, green--just like a pirate`s rainbow! Can you rebuild
+      it step by step?
+    m_Metadata:
+      m_Items: []
+  - m_Id: 12325667908378624
+    m_Key: Hooray! You've saved the day! Now we can cross safely- You're a true puzzle-solving
+      pirate!
     m_Metadata:
       m_Items: []
   m_Metadata:

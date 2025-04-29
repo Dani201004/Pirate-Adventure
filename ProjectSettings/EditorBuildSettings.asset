@@ -18,7 +18,7 @@ EditorBuildSettings:
     path: Assets/Scenes/Avatar.unity
     guid: fef8c16032caf054f963fc01131dffa9
   - enabled: 1
-    path: Assets/Scenes/Credits.unity
+    path: Assets/Scenes/How to play.unity
     guid: 944b515eb0c3b564bba5918e9752eb29
   - enabled: 1
     path: Assets/Scenes/Settings.unity
@@ -30,8 +30,20 @@ EditorBuildSettings:
     path: Assets/Scenes/LoadingScreen.unity
     guid: fda184211f9c27c4490bcb04491a139a
   - enabled: 1
-    path: Assets/Scenes/Puzzles.unity
+    path: Assets/Scenes/Puzzles/Puzzle 1.unity
     guid: 642abd94eecb8b94eb8e0cd4ea6f525b
+  - enabled: 1
+    path: Assets/Scenes/Parental Control.unity
+    guid: 8a4a53a687b3ebe4f86196fa9f4b89af
+  - enabled: 1
+    path: Assets/Scenes/Puzzles/Puzzle 2.unity
+    guid: c7d85c44e348bee43a7f2aada7e438be
+  - enabled: 1
+    path: Assets/Scenes/Puzzles/Puzzle 3.unity
+    guid: d36e4d137832f5e4d83169ca3f33231f
+  - enabled: 1
+    path: Assets/Scenes/Puzzles/Puzzle 4.unity
+    guid: 97af2e698949fd142b58019f49fc8508
   m_configObjects:
     com.unity.addressableassets: {fileID: 11400000, guid: 31682a172fbd58445b01e223b17b5f5a, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}

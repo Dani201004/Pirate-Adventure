@@ -5,28 +5,15 @@ using PlayFab.ClientModels;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine.SceneManagement;
-using System.Linq;
+using System.Collections;
 
 public class PlayFabGameListManager : MonoBehaviour
 {
     private static PlayFabGameListManager instance;
 
-    [Header("Paneles e Inputs")]
-    [SerializeField] private GameObject newGamePanel;             // Panel para crear una nueva partida
-    [SerializeField] private TMP_InputField newGameNameInput;       // InputField donde el jugador ingresa el nombre de la partida
-    [SerializeField] private Button submitButton;                   // Botón para confirmar la creación de la partida
-    [SerializeField] private GameObject error1Panel;                // Panel para error: nombre vacío
-    [SerializeField] private GameObject error2Panel;                // Panel para error: límite de partidas alcanzado
-    [SerializeField] private Button continueError1Button;
-    [SerializeField] private Button continueError2Button;
+    [SerializeField] private MainMenuUIManager mainMenuUIManager;
 
-    [SerializeField] private GameObject principalButtons;
-    [SerializeField] private Button socialButton;
-    [SerializeField] private Button settingsButton;
-
-    [Header("Lista de Partidas Guardadas")]
-    [SerializeField] private Transform savedGamesPanel;           // Panel donde se mostrarán las partidas guardadas
-    [SerializeField] private GameObject savedGamePrefab;          // Prefab para cada entrada en la lista
+    [SerializeField] private SavesUIManager savesUIManager;
 
     private const int maxSavedGames = 10;
     private List<string> savedGames = new List<string>();
@@ -48,28 +35,64 @@ public class PlayFabGameListManager : MonoBehaviour
         }
     }
 
-    void Start()
-    {
-        // Buscar los paneles por nombre al inicio
-        FindComponents();
-
-        AssignButtonListeners();
-    }
-
     private void OnDestroy()
     {
-
         // Desregistrar el evento cuando el objeto se destruye
         SceneManager.sceneLoaded -= OnSceneLoaded;
     }
-    private void RegisterNewGameButton()
+    private IEnumerator FindMainMenuUIManagerAfterDelay()
     {
-        Button newGameButton = GameObject.Find("New Game")?.GetComponent<Button>();  // Asegúrate de que el botón tenga este nombre en la escena.
-        if (newGameButton != null)
+        // Espera un pequeño retraso para asegurarse de que los objetos estén activos
+        yield return new WaitForSeconds(0.1f);
+
+        GameObject mainMenuObject = GameObject.Find("MainMenuUIManager");
+
+        if (mainMenuObject != null)
         {
-            newGameButton.onClick.RemoveAllListeners();  // Limpiar cualquier evento previo
-            newGameButton.onClick.AddListener(ShowNewGamePanel);  // Asignar el evento
+            mainMenuUIManager = mainMenuObject.GetComponent<MainMenuUIManager>();
         }
+        else
+        {
+            Debug.LogWarning("No se encontró el objeto 'MainMenuUIManager' en la escena.");
+        }
+
+        yield return new WaitForSeconds(0.2f);
+
+        mainMenuUIManager.NewGameButton.onClick.RemoveAllListeners();  // Limpiar cualquier evento previo
+        mainMenuUIManager.NewGameButton.onClick.AddListener(ShowNewGamePanel);  // Asignar el evento
+        mainMenuUIManager.NewGameButton.onClick.AddListener(LoadSavedGames);  // Asignar el evento
+
+        mainMenuUIManager.SubmitButton.onClick.RemoveAllListeners(); // Limpiar eventos previos
+        mainMenuUIManager.SubmitButton.onClick.AddListener(OnSubmitNewGame);
+
+        mainMenuUIManager.ContinueError1Button.onClick.RemoveAllListeners(); // Limpiar eventos previos
+        mainMenuUIManager.ContinueError1Button.onClick.AddListener(HideError1Panel);
+
+        mainMenuUIManager.ContinueError2Button.onClick.RemoveAllListeners(); // Limpiar eventos previos
+        mainMenuUIManager.ContinueError2Button.onClick.AddListener(HideError2Panel);
+
+        mainMenuUIManager.ContinueError3Button.onClick.RemoveAllListeners(); // Limpiar eventos previos
+        mainMenuUIManager.ContinueError3Button.onClick.AddListener(HideError3Panel);
+    }
+    private IEnumerator FindSavesUIManagerAfterDelay()
+    {
+        // Espera un pequeño retraso para asegurarse de que los objetos estén activos
+        yield return new WaitForSeconds(0.1f);
+
+        GameObject savesObject = GameObject.Find("SavesUIManager");
+
+        if (savesObject != null)
+        {
+            savesUIManager = savesObject.GetComponent<SavesUIManager>();
+        }
+        else
+        {
+            Debug.LogWarning("No se encontró el objeto 'SavesUIManager' en la escena.");
+        }
+
+        yield return new WaitForSeconds(0.2f);
+
+        
     }
     void OnEnable()
     {
@@ -83,152 +106,33 @@ public class PlayFabGameListManager : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        RegisterNewGameButton();  // Asegúrate de que el botón "New Game" se registre al cargar una nueva escena
-
         // Si la escena es la 0, busca los paneles
-        if (scene.buildIndex == 0)
+        if (SceneManager.GetActiveScene().buildIndex == 0)
         {
-            FindComponents();
-            AssignButtonListeners();
+            StartCoroutine(FindMainMenuUIManagerAfterDelay());
         }
 
-        if (scene.buildIndex == 1)
+        if (SceneManager.GetActiveScene().buildIndex == 1)
         {
-            Debug.Log("Ejecutando DisplaySavedGames() desde OnSceneLoaded.");
+            StartCoroutine(FindSavesUIManagerAfterDelay());
+
             LoadSavedGames();
         }
     }
 
-    private void FindComponents()
-    {
-            // Buscar los componentes de los paneles
-            newGamePanel = FindPanelInHierarchy("SaveNamePanel");
-            error1Panel = FindPanelInHierarchy("Error");
-            error2Panel = FindPanelInHierarchy("Error 2");
-
-            continueError1Button = FindButtonInHierarchy("Continue Error 1");
-            continueError2Button = FindButtonInHierarchy("Continue Error 2");
-
-            // Buscar los componentes de los botones e InputField
-            submitButton = FindButtonInHierarchy("Submit Name");
-            newGameNameInput = FindInputFieldInHierarchy("Enter Save Name");
-
-            // Busca todos los VerticalLayoutGroup en la escena y filtra por nombre del GameObject
-            principalButtons = FindObjectsOfType<VerticalLayoutGroup>(true)
-                .FirstOrDefault(v => v.gameObject.name == "Principal Buttons")?.gameObject;
-            socialButton = FindButtonInHierarchy("Social");
-            settingsButton = FindButtonInHierarchy("Settings");
-
-            // Verificar si se encontraron los componentes
-            if (newGamePanel == null)
-                Debug.LogError("No se encontró 'SaveNamePanel' en la escena.");
-            if (error1Panel == null)
-                Debug.LogError("No se encontró 'Error' en la escena.");
-            if (error2Panel == null)
-                Debug.LogError("No se encontró 'Error 2' en la escena.");
-            if (continueError1Button == null)
-                Debug.LogError("No se encontró 'Continue Error 1' en la escena.");
-            if (continueError2Button == null)
-                Debug.LogError("No se encontró 'Continue Error 2' en la escena.");
-            if (submitButton == null)
-                Debug.LogError("No se encontró 'Submit Name' en la escena.");
-            if (newGameNameInput == null)
-                Debug.LogError("No se encontró 'Enter Save Name' en la escena.");
-            if (principalButtons == null)
-                Debug.LogError("No se encontró 'Principal Buttons' en la escena.");
-            if (socialButton == null)
-                Debug.LogError("No se encontró 'Social' en la escena.");
-            if (settingsButton == null)
-                Debug.LogError("No se encontró 'Settings' en la escena.");
-    }
-    private void AssignButtonListeners()
-    {
-        // Asignar el evento de HideError1Panel al botón Continue Error
-        if (continueError1Button != null)
-        {
-            continueError1Button.onClick.RemoveAllListeners(); // Limpiar eventos previos
-            continueError1Button.onClick.AddListener(HideError1Panel);
-        }
-
-        // Asignar el evento de HideError2Panel al botón Continue Error 2
-        if (continueError2Button != null)
-        {
-            continueError2Button.onClick.RemoveAllListeners(); // Limpiar eventos previos
-            continueError2Button.onClick.AddListener(HideError2Panel);
-        }
-        // Asignar el evento de OnSubmitNewGame al botón Submit Name
-        if (submitButton != null)
-        {
-            submitButton.onClick.RemoveAllListeners(); // Limpiar eventos previos
-            submitButton.onClick.AddListener(OnSubmitNewGame);
-        }
-
-    }
-
-    // Función recursiva para buscar un botón en la jerarquía de objetos, incluso desactivados
-    private Button FindButtonInHierarchy(string buttonName)
-    {
-        // Obtener todos los botones (usando RectTransform para incluir todos los objetos, incluso desactivados)
-        RectTransform[] rectTransforms = GameObject.Find("Canvas").GetComponentsInChildren<RectTransform>(true);
-
-        foreach (RectTransform rt in rectTransforms)
-        {
-            if (rt.gameObject.name == buttonName)
-            {
-                return rt.GetComponent<Button>();
-            }
-        }
-
-        return null;
-    }
-
-    // Función recursiva para buscar un InputField en la jerarquía de objetos, incluso desactivados
-    private TMP_InputField FindInputFieldInHierarchy(string inputFieldName)
-    {
-        // Obtener todos los InputFields (usando RectTransform para incluir todos los objetos, incluso desactivados)
-        RectTransform[] rectTransforms = GameObject.Find("Canvas").GetComponentsInChildren<RectTransform>(true);
-
-        foreach (RectTransform rt in rectTransforms)
-        {
-            if (rt.gameObject.name == inputFieldName)
-            {
-                return rt.GetComponent<TMP_InputField>();
-            }
-        }
-
-        return null;
-    }
-
-    // Función recursiva para buscar un objeto por nombre en todos los hijos, incluso desactivados
-    private GameObject FindPanelInHierarchy(string panelName)
-    {
-        // Obtener todos los RectTransforms en la jerarquía del Canvas (o el objeto raíz adecuado)
-        RectTransform[] rectTransforms = GameObject.Find("Canvas").GetComponentsInChildren<RectTransform>(true);
-
-        foreach (RectTransform rt in rectTransforms)
-        {
-            if (rt.gameObject.name == panelName)
-            {
-                return rt.gameObject;
-            }
-        }
-
-        return null;
-    }
-
     public void ShowNewGamePanel()
     {
-        newGamePanel.SetActive(true);
-        principalButtons.SetActive(false);
-        socialButton.gameObject.SetActive(false);
-        settingsButton.gameObject.SetActive(false);
+        mainMenuUIManager.NewGamePanel.SetActive(true);
+        mainMenuUIManager.PrincipalButtons.SetActive(false);
+        mainMenuUIManager.SocialButton.gameObject.SetActive(false);
+        mainMenuUIManager.SettingsButton.SetActive(false);
     } 
     private void HideNewGamePanel()
     {
-        newGamePanel.SetActive(false);
-        principalButtons.SetActive(true);
-        socialButton.gameObject.SetActive(true);
-        settingsButton.gameObject.SetActive(true);
+        mainMenuUIManager.NewGamePanel.SetActive(false);
+        mainMenuUIManager.PrincipalButtons.SetActive(true);
+        mainMenuUIManager.SocialButton.gameObject.SetActive(true);
+        mainMenuUIManager.SettingsButton.SetActive(true);
     }
 
     // Se recoge el nombre ingresado y se crea una nueva partida
@@ -237,22 +141,32 @@ public class PlayFabGameListManager : MonoBehaviour
         // Verificar si el cooldown ha pasado
         if (Time.time - lastClickedTime < cooldownTime)
         {
-            //Debug.Log("Esperando para el siguiente clic...");
             return;  // Salir del método si no ha pasado el tiempo de cooldown
         }
 
         // Registrar el tiempo de este clic
         lastClickedTime = Time.time;
 
-        string newGameName = newGameNameInput.text;
+        string newGameName = mainMenuUIManager.NewGameNameInput.text.Trim();
+
         if (string.IsNullOrEmpty(newGameName))
         {
-            error1Panel.SetActive(true);
+            mainMenuUIManager.Error1Panel.SetActive(true);
             return;
         }
+
+        // Comparación sin distinguir mayúsculas y minúsculas
+        bool exists = savedGames.Exists(name => name.Trim().ToLowerInvariant() == newGameName.ToLowerInvariant());
+        if (exists)
+        {
+            mainMenuUIManager.Error3Panel.SetActive(true);
+            Debug.LogWarning("Ya existe una partida con ese nombre.");
+            return;
+        }
+
         if (savedGames.Count >= maxSavedGames)
         {
-            error2Panel.SetActive(true);
+            mainMenuUIManager.Error2Panel.SetActive(true);
             return;
         }
         SaveNewGame(newGameName);
@@ -284,7 +198,7 @@ public class PlayFabGameListManager : MonoBehaviour
     }
 
     // Carga las partidas guardadas de PlayFab
-    private void LoadSavedGames()
+    public void LoadSavedGames()
     {
         var request = new GetUserDataRequest();
         PlayFabClientAPI.GetUserData(request, result =>
@@ -297,7 +211,7 @@ public class PlayFabGameListManager : MonoBehaviour
                     if (data.Key.StartsWith("GameName_"))
                     {
                         savedGames.Add(data.Value.Value);
-                        Debug.Log("Partida cargada: " + data.Value.Value);  // Verifica las partidas cargadas
+                        //Debug.Log("Partida cargada: " + data.Value.Value);  // Verifica las partidas cargadas
                     }
                 }
             }
@@ -311,20 +225,16 @@ public class PlayFabGameListManager : MonoBehaviour
     // Genera la lista de partidas en la interfaz
     private void DisplaySavedGames()
     {
-        Debug.Log("Número de partidas guardadas: " + savedGames.Count);
-
-        if (savedGamesPanel == null)
+        if (SceneManager.GetActiveScene().buildIndex != 1)
         {
-            savedGamesPanel = GameObject.Find("SavedGamesLayoutGroup")?.transform;
-            if (savedGamesPanel == null)
-            {
-                Debug.LogError("No se encontró 'SavedGamesLayoutGroup' en la escena.");
-                return;
-            }
+            Debug.Log("No se encuentra en la escena correcta para mostrar partidas.");
+            return;
         }
 
+        Debug.Log("Número de partidas guardadas: " + savedGames.Count);
+
         // Limpiar los elementos anteriores
-        foreach (Transform child in savedGamesPanel)
+        foreach (Transform child in savesUIManager.SavedGamesLayoutGroup)
         {
             Destroy(child.gameObject);
         }
@@ -332,7 +242,7 @@ public class PlayFabGameListManager : MonoBehaviour
         // Crear las nuevas entradas
         foreach (string gameName in savedGames)
         {
-            GameObject entry = Instantiate(savedGamePrefab, savedGamesPanel);
+            GameObject entry = Instantiate(savesUIManager.SavedGamePrefab, savesUIManager.SavedGamesLayoutGroup);
 
             // Buscar y asignar el texto del nombre de la partida
             TextMeshProUGUI nameText = entry.transform.Find("SavedGameNametext").GetComponent<TextMeshProUGUI>();
@@ -467,28 +377,36 @@ public class PlayFabGameListManager : MonoBehaviour
     // Al seleccionar una partida, se llama a PlayFabProgressManager para cargar los datos asociados
     private void OnGameSelected(string gameName)
     {
+        // Luego pasa puzzleId al método de transición.
         SceneTransition.Instance.LoadLevelSave(gameName);
     }
     // Método para borrar una partida
     private void OnDeleteGame(string gameName)
     {
-        string keyToRemove = "GameName_" + gameName;
-        var request = new UpdateUserDataRequest
-        {
-            KeysToRemove = new List<string> { keyToRemove }  // Ahora se especifica correctamente la clave a eliminar
-        };
+    // Eliminar todas las claves asociadas con la partida
+    var keysToRemove = new List<string>
+    {
+        "GameName_" + gameName,
+        "PuzzleProgress_" + gameName,
+        "MagicGems_" + gameName
+    };
 
-        PlayFabClientAPI.UpdateUserData(request, result =>
-        {
-            Debug.Log("Partida eliminada correctamente: " + gameName);
+    var request = new UpdateUserDataRequest
+    {
+        KeysToRemove = keysToRemove  // Especifica las claves a eliminar
+    };
 
-            // Eliminar la partida de la lista local
-            savedGames.Remove(gameName);
-            DisplaySavedGames();  // Actualizar la lista en la UI
-        }, error =>
-        {
-            Debug.LogError("Error al eliminar la partida: " + error.GenerateErrorReport());
-        });
+    PlayFabClientAPI.UpdateUserData(request, result =>
+    {
+        Debug.Log("Partida eliminada correctamente: " + gameName);
+
+        // Eliminar la partida de la lista local
+        savedGames.Remove(gameName);
+        DisplaySavedGames();  // Actualizar la lista en la UI
+    }, error =>
+    {
+        Debug.LogError("Error al eliminar la partida: " + error.GenerateErrorReport());
+    });
     }
 
     private void OnNewGame()
@@ -498,11 +416,15 @@ public class PlayFabGameListManager : MonoBehaviour
 
     public void HideError1Panel()
     {
-        error1Panel.SetActive(false);
+        mainMenuUIManager.Error1Panel.SetActive(false);
     }
     public void HideError2Panel()
     {
-        error2Panel.SetActive(false);
-        newGamePanel.SetActive(false);
+        mainMenuUIManager.Error2Panel.SetActive(false);
+        mainMenuUIManager.NewGamePanel.SetActive(false);
+    }
+    public void HideError3Panel()
+    {
+        mainMenuUIManager.Error3Panel.SetActive(false);
     }
 }

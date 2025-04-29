@@ -9,14 +9,14 @@ public class PlayFabProgressManager : MonoBehaviour
     public static PlayFabProgressManager Instance;
 
     [Header("Progreso y Datos")]
-    public int puzzleProgress = 0;  // Puzzles completados
-    public int magicGems = 0;       // Número de gemas mágicas
-    public int silverTrophies = 0;  // Número de trofeos de plata
-    public int goldTrophies = 0;    // Número de trofeos de oro
+    [SerializeField] public int puzzleProgress = 0;  // Puzzles completados
+    [SerializeField] public int magicGems = 0;       // Número de gemas mágicas
+    [SerializeField] public int silverTrophies = 0;  // Número de trofeos de plata
+    [SerializeField] public int goldTrophies = 0;    // Número de trofeos de oro
 
-    [Header("Transición y Escena")]
-    [SerializeField] private Canvas childCanvas;
-    [SerializeField] private Animator transitionAnim;
+    [SerializeField] public string lastGamePlayed = ""; // Última partida jugada
+
+    public int currentPuzzle { get; private set; }
 
     void Awake()
     {
@@ -34,12 +34,15 @@ public class PlayFabProgressManager : MonoBehaviour
     /// </summary>
     public void SaveGameData(string gameName)
     {
+        lastGamePlayed = gameName;  // Guardamos el nombre de la última partida jugada
+
         var data = new Dictionary<string, string>
         {
             { "PuzzleProgress_" + gameName, puzzleProgress.ToString() },
             { "MagicGems_" + gameName, magicGems.ToString() },
             { "SilverTrophies_" + gameName, silverTrophies.ToString() },
-            { "GoldTrophies_" + gameName, goldTrophies.ToString() }
+            { "GoldTrophies_" + gameName, goldTrophies.ToString() },
+            { "LastGamePlayed", gameName }  // Guardamos también la última partida jugada
         };
 
         var request = new GetUserDataRequest();
@@ -96,6 +99,11 @@ public class PlayFabProgressManager : MonoBehaviour
                 else
                     Debug.LogWarning("No se encontraron trofeos de oro para " + gameName);
 
+                if (result.Data.ContainsKey("LastGamePlayed"))
+                    lastGamePlayed = result.Data["LastGamePlayed"].Value;
+                else
+                    Debug.LogWarning("No se encontró la última partida jugada.");
+
                 Debug.Log("Datos cargados para la partida " + gameName);
             }
             else
@@ -109,7 +117,7 @@ public class PlayFabProgressManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Captura una captura de pantalla y la guarda.
+    /// Captura una imagen del juego y la guarda como base64 en PlayerPrefs (solo en WebGL).
     /// </summary>
     private IEnumerator CaptureScreenshot(string gameName)
     {
@@ -123,6 +131,7 @@ public class PlayFabProgressManager : MonoBehaviour
             PlayerPrefs.SetString(gameName + "_screenshot_base64", base64);
             PlayerPrefs.Save();
             Debug.Log("Captura de pantalla (base64) guardada para " + gameName);
+            Destroy(screenTexture); // Liberar memoria
         }
         else
         {
@@ -133,8 +142,8 @@ public class PlayFabProgressManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Recupera la imagen guardada para la partida. 
-    /// Si la partida tiene una captura de pantalla, devuelve una Sprite.
+    /// Recupera la imagen guardada como base64 para una partida. 
+    /// Devuelve un Sprite, o null si no hay imagen.
     /// </summary>
     public Sprite GetSavedGameImage(string gameName)
     {
@@ -142,15 +151,22 @@ public class PlayFabProgressManager : MonoBehaviour
         if (!string.IsNullOrEmpty(base64Image))
         {
             byte[] imageData = System.Convert.FromBase64String(base64Image);
-            Texture2D texture = new Texture2D(2, 2);  // Crear una textura temporal
-            texture.LoadImage(imageData);  // Cargar la imagen base64 en la textura
-            Sprite sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
-            return sprite;
+            Texture2D texture = new Texture2D(2, 2); // Tamaño inicial arbitrario
+            if (texture.LoadImage(imageData))
+            {
+                return Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
+            }
         }
-        else
-        {
-            // Si no hay imagen guardada, retornar null o una imagen por defecto
-            return null;
-        }
+
+        return null; // O podrías retornar una imagen por defecto aquí
     }
+    public void SetCurrentPuzzle(int puzzleID)
+    {
+        currentPuzzle = puzzleID;
+    }
+    public void SetCurrentGame(string gameName)
+    {
+        lastGamePlayed = gameName;
+    }
+
 }

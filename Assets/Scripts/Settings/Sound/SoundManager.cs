@@ -1,19 +1,17 @@
 using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.SceneManagement;
-using UnityEngine.UI;
+using System.Collections;
 
 public class SoundManager : MonoBehaviour
 {
-    public static SoundManager Instance; // Singleton
+    public static SoundManager Instance;
+
+    [Header("Referencia al administrador de gameobjects del apartado settings")]
+    [SerializeField] private SettingsUIManager settingsUIManager;
 
     [SerializeField] private AudioMixer mixer;
     [SerializeField] private AudioSource musicSource;
-
-    // Referencias a la UI que se actualizarán en cada escena
-    private Slider effectsSlider;
-    private Slider musicSlider;
-    private Toggle musicToggle;
 
     private const string MusicVolumeKey = "musicVolume";
     private const string EffectsVolumeKey = "effectsVolume";
@@ -43,81 +41,52 @@ public class SoundManager : MonoBehaviour
         SceneManager.sceneLoaded -= OnSceneLoaded;
     }
 
-    /// <summary>
-    /// Se ejecuta cada vez que se carga una escena.
-    /// </summary>
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        UpdateUIReferences();
+        // Comprobar si estamos en la escena 5
+        if (scene.buildIndex == 5)
+        {
+            StartCoroutine(FindSettingsUIManagerAfterDelay());
+        }
     }
-
-    /// <summary>
-    /// Busca en la escena los objetos "MusicSlider", "EffectsSlider" y "MusicToggle",
-    /// aunque estén desactivados o sean hijos profundos, y les asigna sus listeners.
-    /// </summary>
-    private void UpdateUIReferences()
+    private IEnumerator FindSettingsUIManagerAfterDelay()
     {
-        // 1) Buscar el objeto "MusicSlider" (aunque esté inactivo/en hijos)
-        GameObject musicBarObject = FindInActiveObjectByName("MusicSlider");
-        if (musicBarObject != null)
+        // Espera un pequeño retraso para asegurarse de que los objetos estén activos
+        yield return new WaitForSeconds(0.1f);
+
+        GameObject settingsObject = GameObject.Find("SettingsUIManager");
+
+        if (settingsObject != null)
         {
-            // Importante: GetComponentInChildren<Slider>(true) para incluir hijos inactivos
-            musicSlider = musicBarObject.GetComponentInChildren<Slider>(true);
-            if (musicSlider != null)
-            {
-                musicSlider.onValueChanged.RemoveAllListeners();
-                musicSlider.onValueChanged.AddListener(OnMusicSliderChanged);
-            }
+            settingsUIManager = settingsObject.GetComponent<SettingsUIManager>();
         }
         else
         {
-            musicSlider = null;
+            Debug.LogWarning("No se encontró el objeto 'SettingsUIManager' en la escena.");
         }
 
-        // 2) Buscar el objeto "EffectsSlider"
-        GameObject effectsBarObject = FindInActiveObjectByName("EffectsSlider");
-        if (effectsBarObject != null)
-        {
-            effectsSlider = effectsBarObject.GetComponentInChildren<Slider>(true);
-            if (effectsSlider != null)
-            {
-                effectsSlider.onValueChanged.RemoveAllListeners();
-                effectsSlider.onValueChanged.AddListener(OnEffectsSliderChanged);
-            }
-        }
-        else
-        {
-            effectsSlider = null;
-        }
+        yield return new WaitForSeconds(0.2f);
 
-        // 3) Buscar el objeto "MusicToggle"
-        GameObject musicToggleObject = FindInActiveObjectByName("MusicToggle");
-        if (musicToggleObject != null)
-        {
-            musicToggle = musicToggleObject.GetComponentInChildren<Toggle>(true);
-            if (musicToggle != null)
-            {
-                musicToggle.onValueChanged.RemoveAllListeners();
-                musicToggle.onValueChanged.AddListener(OnMusicToggleChanged);
-            }
-        }
-        else
-        {
-            musicToggle = null;
-        }
+        settingsUIManager.MusicSlider.onValueChanged.RemoveAllListeners();
+        settingsUIManager.MusicSlider.onValueChanged.AddListener(OnMusicSliderChanged);
+
+        settingsUIManager.EffectsSlider.onValueChanged.RemoveAllListeners();
+        settingsUIManager.EffectsSlider.onValueChanged.AddListener(OnEffectsSliderChanged);
+
+        settingsUIManager.MusicToggle.onValueChanged.RemoveAllListeners();
+        settingsUIManager.MusicToggle.onValueChanged.AddListener(OnMusicToggleChanged);
 
         // Sincronizar la UI con los valores guardados
         LoadVolume();
-        if (musicSlider != null)
-            OnMusicSliderChanged(musicSlider.value);
-        if (effectsSlider != null)
-            OnEffectsSliderChanged(effectsSlider.value);
+        if (settingsUIManager.MusicSlider != null)
+            OnMusicSliderChanged(settingsUIManager.MusicSlider.value);
+        if (settingsUIManager.EffectsSlider != null)
+            OnEffectsSliderChanged(settingsUIManager.EffectsSlider.value);
     }
-
     public void OnMusicSliderChanged(float value)
     {
         // Si el toggle está apagado, se silencia la música
-        if (musicToggle != null && !musicToggle.isOn)
+        if (settingsUIManager.MusicToggle != null && !settingsUIManager.MusicToggle.isOn)
         {
             mixer.SetFloat("music", -80f);
             return;
@@ -151,8 +120,8 @@ public class SoundManager : MonoBehaviour
     {
         if (isOn)
         {
-            if (musicSlider != null)
-                OnMusicSliderChanged(musicSlider.value);
+            if (settingsUIManager.MusicSlider != null)
+                OnMusicSliderChanged(settingsUIManager.MusicSlider.value);
         }
         else
         {
@@ -164,45 +133,14 @@ public class SoundManager : MonoBehaviour
     {
         if (!PlayerPrefs.HasKey(MusicVolumeKey))
             PlayerPrefs.SetFloat(MusicVolumeKey, DefaultVolume);
+
         if (!PlayerPrefs.HasKey(EffectsVolumeKey))
             PlayerPrefs.SetFloat(EffectsVolumeKey, DefaultVolume);
 
-        if (musicSlider != null)
-            musicSlider.value = PlayerPrefs.GetFloat(MusicVolumeKey, DefaultVolume);
-        if (effectsSlider != null)
-            effectsSlider.value = PlayerPrefs.GetFloat(EffectsVolumeKey, DefaultVolume);
-    }
+        if (settingsUIManager.MusicSlider != null)
+            settingsUIManager.MusicSlider.value = PlayerPrefs.GetFloat(MusicVolumeKey, DefaultVolume);
 
-    /// <summary>
-    /// Busca un GameObject por nombre en la escena actual,
-    /// incluyendo objetos inactivos.
-    /// Devuelve el primero que coincida.
-    /// </summary>
-    private GameObject FindInActiveObjectByName(string name)
-    {
-        var rootObjects = SceneManager.GetActiveScene().GetRootGameObjects();
-        foreach (var rootObj in rootObjects)
-        {
-            var result = FindInChildrenRecursive(rootObj, name);
-            if (result != null)
-                return result;
-        }
-        return null;
-    }
-
-    /// <summary>
-    /// Búsqueda recursiva en todos los hijos (activos o inactivos) de un objeto.
-    /// </summary>
-    private GameObject FindInChildrenRecursive(GameObject parent, string name)
-    {
-        if (parent.name == name) return parent;
-
-        for (int i = 0; i < parent.transform.childCount; i++)
-        {
-            var child = parent.transform.GetChild(i).gameObject;
-            var result = FindInChildrenRecursive(child, name);
-            if (result != null) return result;
-        }
-        return null;
+        if (settingsUIManager.EffectsSlider != null)
+            settingsUIManager.EffectsSlider.value = PlayerPrefs.GetFloat(EffectsVolumeKey, DefaultVolume);
     }
 }

@@ -1,13 +1,23 @@
 using System.Collections;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Localization.Settings;
 using UnityEngine.SceneManagement;
-using UnityEngine.UI;
+using System.Globalization;
+using System;
 
 public class LanguageManager : MonoBehaviour
 {
     private static LanguageManager _instance;
+
+    // Crear un evento para notificar a los demás scripts cuando el idioma cambia
+    public static event Action OnLanguageChanged;
+
+    public static int CurrentLanguage { get; private set; } // Propiedad estática para acceder al idioma actual
+
+    private bool active = false;
+
+    [Header("Referencia al administrador de gameobjects del apartado settings")]
+    [SerializeField] private SettingsUIManager settingsUIManager;
 
     private void Awake()
     {
@@ -28,12 +38,22 @@ public class LanguageManager : MonoBehaviour
 
     private void Start()
     {
-        // Cargar el idioma almacenado en PlayerPrefs
-        int localeID = PlayerPrefs.GetInt("LocaleKey", 0);  // 0 es el valor por defecto
-        ChangeLocale(localeID);
-    }
+        // Comprobar si ya existe una preferencia de idioma guardada en PlayerPrefs
+        int storedLocaleID = PlayerPrefs.GetInt("LocaleKey", -1); // Valor -1 si no existe preferencia
 
-    private bool active = false;
+        if (storedLocaleID == -1)
+        {
+            // Si no hay preferencia guardada, usa el idioma del dispositivo
+            string deviceLanguage = GetDeviceLanguage();
+            int localeID = GetLocaleIDFromLanguage(deviceLanguage);
+            ChangeLocale(localeID); // Cambiar al idioma del dispositivo
+        }
+        else
+        {
+            // Si existe preferencia guardada, usarla
+            ChangeLocale(storedLocaleID);
+        }
+    }
 
     // Método para cambiar el idioma
     public void ChangeLocale(int localeID)
@@ -52,6 +72,9 @@ public class LanguageManager : MonoBehaviour
         LocalizationSettings.SelectedLocale = LocalizationSettings.AvailableLocales.Locales[_localeID];
         PlayerPrefs.SetInt("LocaleKey", _localeID);  // Guardar el idioma en PlayerPrefs
         active = false;
+
+        // Llamar al evento para que los demás scripts reciban la notificación
+        OnLanguageChanged?.Invoke();
     }
 
     // Método que se llama cada vez que se carga una nueva escena
@@ -60,44 +83,59 @@ public class LanguageManager : MonoBehaviour
         // Comprobar si estamos en la escena 5
         if (scene.buildIndex == 5)
         {
-            AssignLanguageButtons();
+            StartCoroutine(FindSettingsUIManagerAfterDelay());
         }
     }
 
-    // Método para asignar los eventos a los botones de idioma
-    private void AssignLanguageButtons()
+    private IEnumerator FindSettingsUIManagerAfterDelay()
     {
-        // Buscar el objeto padre que contiene los botones (supongamos que se llama "LanguageButtons")
-        Transform Canvas = GameObject.Find("Canvas")?.transform;
+        // Espera un pequeño retraso para asegurarse de que los objetos estén activos
+        yield return new WaitForSeconds(0.1f);
 
-        if (Canvas != null)
+        GameObject settingsObject = GameObject.Find("SettingsUIManager");
+
+        if (settingsObject != null)
         {
-            // Buscar los botones "English" y "Spanish" dentro de su objeto padre
-            Button englishButton = Canvas.Find("English")?.GetComponent<Button>();
-            Button spanishButton = Canvas.Find("Spanish")?.GetComponent<Button>();
-
-            // Si los botones están presentes, asignarles los eventos
-            if (englishButton != null)
-            {
-                englishButton.onClick.RemoveAllListeners();  // Limpiar eventos previos
-                englishButton.onClick.AddListener(() => ChangeLocale(0));  // 0 para inglés
-            }
-
-            if (spanishButton != null)
-            {
-                spanishButton.onClick.RemoveAllListeners();  // Limpiar eventos previos
-                spanishButton.onClick.AddListener(() => ChangeLocale(1));  // 1 para español
-            }
+            settingsUIManager = settingsObject.GetComponent<SettingsUIManager>();
         }
         else
         {
-            Debug.LogError("No se encontró el objeto 'LanguageButtons' en la escena.");
+            Debug.LogWarning("No se encontró el objeto 'SettingsUIManager' en la escena.");
         }
+
+        yield return new WaitForSeconds(0.2f);
+
+        settingsUIManager.EnglishButton.onClick.RemoveAllListeners();  // Limpiar eventos previos
+        settingsUIManager.EnglishButton.onClick.AddListener(() => ChangeLocale(0));  // 0 para inglés
+
+        settingsUIManager.SpanishButton.onClick.RemoveAllListeners();  // Limpiar eventos previos
+        settingsUIManager.SpanishButton.onClick.AddListener(() => ChangeLocale(1));  // 1 para español
+
     }
 
     // Asegurarse de desregistrar el evento cuando el objeto sea destruido
     private void OnDestroy()
     {
         SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
+    // Método para obtener el idioma del dispositivo
+    private string GetDeviceLanguage()
+    {
+        return CultureInfo.CurrentCulture.TwoLetterISOLanguageName; // Obtiene el código de idioma en formato de dos letras (es, en, etc.)
+    }
+
+    // Método para mapear el idioma a un ID de locale (0 para inglés, 1 para español)
+    private int GetLocaleIDFromLanguage(string language)
+    {
+        switch (language)
+        {
+            case "en":
+                return 0; // Inglés
+            case "es":
+                return 1; // Español
+            default:
+                return 0; // Inglés por defecto si el idioma no está soportado
+        }
     }
 }
