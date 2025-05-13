@@ -240,6 +240,149 @@ MonoBehaviour:
       seguridad. \xA1Eres un verdadero pirata experto en resolver acertijos!"
     m_Metadata:
       m_Items: []
+  - m_Id: 14924099693076480
+    m_Localized: "\xA1Bienvenido a \"Puzzle Quest: Piratas\" \u2013 Una m\xE1gica
+      aventura para aprender jugando!"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14924528803930112
+    m_Localized: "\xA1Hola, mam\xE1s, pap\xE1s y profes! \xA1Zarpamos hacia una aventura
+      divertida, educativa y llena de descubrimientos! Este juego est\xE1 pensado
+      especialmente para que los ni\xF1os aprendan y exploren nuevas cosas mientras
+      se divierten. Ayuda a mejorar el aprendizaje, las habilidades cognitivas y
+      la resoluci\xF3n de problemas en un mundo pirata tranquilo, estructurado y
+      lleno de recompensas."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14925062084517888
+    m_Localized: "\xA1Ahoy, grumete! \xBFListo para descubrir tesoros con tu brillante
+      cerebrito? \xA1Izamos velas y a navegar!"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14925441144741888
+    m_Localized: "\xA1Cada rompecabezas que resuelves hace que nuestro barco brille
+      m\xE1s! \xA1T\xFA eres el h\xE9roe de esta aventura!"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14925782401703936
+    m_Localized: "\xA1Bienvenido a bordo! Ser\xE9 tu acogedor hogar mientras exploramos.
+      \xA1Vamos a hacer magia juntos!"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14927594236174336
+    m_Localized: "\xA1Personaliza a tu pirata! \u2013 \xA1Elige tu avatar y un adorable
+      compa\xF1ero mascota!"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14927786016530432
+    m_Localized: "Juega con tus amigos \u2013 \xDAnete a tus amigos en equipo."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14928077277388800
+    m_Localized: "Resuelve divertidos rompecabezas \u2013 \xA1Empareja colores, ordena
+      tesoros y desbloquea gemas m\xE1gicas!"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14928154993647616
+    m_Localized: "\xA1Celebra tu \xE9xito! \u2013 \xA1Recibe aplausos, recompensas
+      y desbloquea disfraces geniales!"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14928619407958016
+    m_Localized: "\xA1Mira estos candados! Rojo, azul, verde... \xA1cada uno necesita
+      su llave perfecta! \xBFPuedes encontrar las parejas?"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14928868344094720
+    m_Localized: "\xA1Yuju! \xA1Ese cofre brill\xF3 solo para TI! \xBFQu\xE9 habr\xE1
+      dentro? \xA1Vamos a verlo!"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14929053426147328
+    m_Localized: "\xA1Ups! Esa llave quiere su propio cofre. \xA1Intent\xE9moslo
+      de nuevo, sin prisas!"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14929229117153280
+    m_Localized: "\xA1Conoce a tu nuevo amigo loro! \xA1Cantar\xE1n melod\xEDas felices
+      cada vez que resuelvas un rompecabezas!"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 15303201495212032
+    m_Localized: "\xA1Psst! La jungla escondi\xF3 mis gemas bajo estos rompecabezas
+      llenos de hojas. \xA1Desliza las piezas para descubrir los destellos!"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 15303235183861760
+    m_Localized: "Mira c\xF3mo se alinean las venas de las hojas. \xA1Esa es tu pista!
+      \xA1Tienes ojos de \xE1guila!"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 15303256943910912
+    m_Localized: "\xBFNecesitas un brillo? Las luci\xE9rnagas parpadean. \xA1Sigue
+      la luz, ella te guiar\xE1!"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 15303292629049344
+    m_Localized: "\xA1Eres un genio de la jungla! Ahora vamos a colocar estas gemas
+      en el motor de la nave\u2014\xA1fiuuum!"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 15303329958354944
+    m_Localized: "\xA1Ay, cielos! \xA1La tormenta esparci\xF3 mis tesoros por todas
+      partes! Sombreros, herramientas, mapas\u2026 \xBFpuedes ordenarlos en sus cajones?"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 15303367040196608
+    m_Localized: "Un gancho va con las herramientas, igual que mi sombrero va en
+      mi cabeza. \xA1Qu\xE9 forma tan astuta de pensar!"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 15303394995232768
+    m_Localized: "\xBFEsa caja se movi\xF3? \xA1Tal vez este mapa brillante pertenece
+      a Tesoros!"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 15303412510646272
+    m_Localized: "\xA1Has ganado un trozo de mapa! \xA1Re\xFAne todas las piezas
+      para descubrir el Secreto del Loro Dorado!"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 15303442101460992
+    m_Localized: "\xA1Colocaste la cuerda rayada a la perfecci\xF3n! \xA1Ahora el
+      puente se siente s\xFAper resistente!"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 15303472006848512
+    m_Localized: "\xA1No te preocupes! \xA1Hasta los piratas a veces se confunden
+      con las cuerdas! Intenta de nuevo, \xA1creo en ti!"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 15303617075240960
+    m_Localized: "\xA1Lo lograste! Ahora podemos cruzar con seguridad. \xA1Choca
+      los cinco con tu avatar para celebrar!"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 15303734192791552
+    m_Localized: "\xA1Tu cangrejo parece tener hambre! \xA1Toca las algas para darle
+      de comer\u2014\xF1am \xF1am!"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 15303852438609920
+    m_Localized: "\xA1Tu loro aprendi\xF3 una nueva palabra: \u201C\xA1Brillante!\u201D
+      \xA1Dila conmigo!"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 15303925201395712
+    m_Localized: "\xA1Alerta de tesoro especial! \xA1Resuelve el puzzle de hoy y
+      gana un ancla dorada para tu colecci\xF3n!"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 15303954825764864
+    m_Localized: "\xA1Psst! Los adultos pueden echar un vistazo a tu progreso en
+      la Cala de los Padres. \xA1Estar\xE1n muy orgullosos!"
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

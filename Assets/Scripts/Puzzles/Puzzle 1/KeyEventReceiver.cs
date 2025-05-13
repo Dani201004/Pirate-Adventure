@@ -86,42 +86,25 @@ public class KeyEventReceiver : MonoBehaviour
 
     private Vector3 StringToVector3(string str)
     {
-        // Se espera el formato: "1,80,2,45,1,55" (para es-ES)
         string[] parts = str.Split(',');
         if (parts.Length == 3)
         {
-            // Caso "normal": si se recibiera con 3 partes (por ejemplo, "1.80,2.45,1.55"),
-            float x = float.Parse(parts[0], CultureInfo.CurrentCulture);
-            float y = float.Parse(parts[1], CultureInfo.CurrentCulture);
-            float z = float.Parse(parts[2], CultureInfo.CurrentCulture);
+            float x = float.Parse(parts[0], CultureInfo.InvariantCulture);
+            float y = float.Parse(parts[1], CultureInfo.InvariantCulture);
+            float z = float.Parse(parts[2], CultureInfo.InvariantCulture);
             return new Vector3(x, y, z);
         }
-        else if (parts.Length == 6)
-        {
-            // Combinar cada dos partes: 
-            // parts[0] + "," + parts[1] debería representar el primer número: "1,80"
-            // parts[2] + "," + parts[3] => "2,45"
-            // parts[4] + "," + parts[5] => "1,55"
-            string xStr = parts[0] + "," + parts[1];
-            string yStr = parts[2] + "," + parts[3];
-            string zStr = parts[4] + "," + parts[5];
 
-            float x = float.Parse(xStr, CultureInfo.CurrentCulture);
-            float y = float.Parse(yStr, CultureInfo.CurrentCulture);
-            float z = float.Parse(zStr, CultureInfo.CurrentCulture);
-            return new Vector3(x, y, z);
-        }
-        else
-        {
-            Debug.LogError("Formato de Vector3 inválido: " + str);
-            return Vector3.zero;
-        }
+        Debug.LogError($"Formato de Vector3 inválido: '{str}'. Se esperaban 3 valores separados por coma.");
+        return Vector3.zero;
     }
 
     private string SerializeVector(Vector3 v)
     {
-        // Usamos la cultura actual para que el formato coincida con el que se guarda en PlayFab (por ejemplo, "1,80,2,45,1,55")
-        return $"{v.x.ToString("F2", CultureInfo.CurrentCulture)},{v.y.ToString("F2", CultureInfo.CurrentCulture)},{v.z.ToString("F2", CultureInfo.CurrentCulture)}";
+        // Usa "." como separador decimal sin importar la cultura del sistema
+        return $"{v.x.ToString("F2", CultureInfo.InvariantCulture)}," +
+               $"{v.y.ToString("F2", CultureInfo.InvariantCulture)}," +
+               $"{v.z.ToString("F2", CultureInfo.InvariantCulture)}";
     }
 
     IEnumerator CheckForKeyUseEvent()
@@ -143,7 +126,7 @@ public class KeyEventReceiver : MonoBehaviour
             return;
         }
 
-        Debug.Log($"[SYNC] sharedGroupId: {sharedGroupId}"); // Log para el sharedGroupId
+        //Debug.Log($"[SYNC] sharedGroupId: {sharedGroupId}"); // Log para el sharedGroupId
 
         var request = new GetSharedGroupDataRequest
         {
@@ -207,7 +190,7 @@ public class KeyEventReceiver : MonoBehaviour
                         }
                         else
                         {
-                            Debug.Log("[SYNC] No es un 'Cofre abierto', no se procesará esta entrada.");
+                            //Debug.Log("[SYNC] No es un 'Cofre abierto', no se procesará esta entrada.");
                         }
                     }
                 }
@@ -229,19 +212,19 @@ public class KeyEventReceiver : MonoBehaviour
         if (keyParts.Length == 2)
         {
             string color = keyParts[0];
-            //Debug.Log($"[DEBUG] Color de la llave: {color}"); // Log para el color de la llave
+            Debug.Log($"[DEBUG] Color de la llave: {color}"); // Log para el color de la llave
 
             // Busca el objeto Key correspondiente en la escena solo por color
             Key[] keys = FindObjectsOfType<Key>();
 
-            //Debug.Log($"[DEBUG] Se encontraron {keys.Length} llaves en la escena."); // Log para cuántas llaves se encontraron
+            Debug.Log($"[DEBUG] Se encontraron {keys.Length} llaves en la escena."); // Log para cuántas llaves se encontraron
 
             foreach (var key in keys)
             {
                 // Comparar solo por color
                 if (key.Color == color)
                 {
-                    //Debug.Log($"[DEBUG] Se encontró una llave que coincide con el color: {key.Color}"); // Log si la llave coincide
+                    Debug.Log($"[DEBUG] Se encontró una llave que coincide con el color: {key.Color}"); // Log si la llave coincide
 
                     // Busca el cofre correspondiente en la escena por color
                     Chest[] chests = FindObjectsOfType<Chest>();
@@ -253,13 +236,16 @@ public class KeyEventReceiver : MonoBehaviour
                         {
                             chest.Open();  // Abre el cofre
                             key.isKeyUsed = true;  // Marca la llave como utilizada
+
+                            // Después de abrir el cofre y marcar la llave, destrúyela
                             Destroy(key.gameObject);  // Destruye la llave
+                            Debug.Log("Se elimina la llave");
 
                             return; // Sale después de llamar al método
                         }
                     }
 
-                    Debug.LogError("[ERROR] No se encontró un cofre que coincida con el color de la llave."); // Log de error si no se encuentra el cofre
+                    //Debug.LogError("[ERROR] No se encontró un cofre que coincida con el color de la llave."); // Log de error si no se encuentra el cofre
                     return;
                 }
             }

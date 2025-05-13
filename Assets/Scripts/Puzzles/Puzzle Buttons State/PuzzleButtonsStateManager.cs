@@ -41,41 +41,43 @@ public class PuzzleButtonsStateManager : MonoBehaviour
     private IEnumerator<WaitUntil> WaitForProgressManager()
     {
         yield return new WaitUntil(() => PlayFabProgressManager.Instance != null);
-        LoadPuzzleState();
+        SetGameName(name);
     }
 
     public void SetGameName(string name)
     {
-        gameName = name;
-        Debug.Log("Setting Game Name: " + gameName); // Añadido para depurar si el valor se asigna
-        LoadPuzzleState();
+        // Usamos el nombre guardado en PlayFabProgressManager si está disponible
+        gameName = PlayFabProgressManager.Instance.lastGamePlayed;
+        Debug.Log("Setting Game Name: " + gameName);  // Aseguramos que se asigna correctamente
+
+        LoadPuzzleState();  // Llamamos para cargar el estado de los puzzles
     }
 
     private void LoadPuzzleState()
     {
         PlayFabProgressManager.Instance.LoadGameData(gameName);
-        StartCoroutine(ApplyPuzzleStatesAfterDelay(1f));
+        StartCoroutine(ApplyPuzzleStatesAfterDelay());
     }
 
-    private IEnumerator<WaitForSeconds> ApplyPuzzleStatesAfterDelay(float delay)
+    private IEnumerator<WaitForSeconds> ApplyPuzzleStatesAfterDelay()
     {
-        yield return new WaitForSeconds(delay);
+        yield return new WaitForSeconds(0.2f);
 
-        int progress = PlayFabProgressManager.Instance.puzzleProgress;
+        HashSet<int> completedPuzzles = PlayFabProgressManager.Instance.completedPuzzles;
 
         foreach (var entry in puzzleButtons)
         {
-            // Cambiar el sprite según el progreso
+            // Cambiar el sprite según si el puzzle está completado o no
             if (entry.statusImage != null)
             {
-                bool isCompleted = entry.puzzleID < progress;
+                bool isCompleted = completedPuzzles.Contains(entry.puzzleID);
                 entry.statusImage.sprite = isCompleted ? completedSprite : incompleteSprite;
             }
 
             // Preparar el botón
             entry.button.onClick.RemoveAllListeners();
 
-            string sceneToLoad = entry.sceneName; // capturar por cierre
+            string sceneToLoad = entry.sceneName;
             int puzzleID = entry.puzzleID;
 
             entry.button.onClick.AddListener(() =>

@@ -1,56 +1,99 @@
 using UnityEngine;
+using UnityEngine.Localization;
 
 public class Chest : MonoBehaviour
 {
-    public string Color; // Color del cofre
-    [SerializeField] private Animator chestAnimator; // Animator del cofre
-    [SerializeField] private AudioClip openSound; // Clip de sonido
-    [SerializeField] private AudioClip rejectSound; // Clip de sonido para la llave incorrecta
-    [SerializeField] private AudioSource audioSource; // Componente AudioSource
-    [SerializeField] private ParticleSystem particles; // Sistema de partículas
+    public string Color;
+    [SerializeField] private Animator chestAnimator;
+    [SerializeField] private AudioClip openSound;
+    [SerializeField] private AudioClip rejectSound;
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private ParticleSystem particles;
+    [SerializeField] private ParticleSystem lockParticles;
 
-    public bool isOpened = false; // Estado de si el cofre está abierto
+    private ChestShake shakeScript;
+    private Quaternion originalRotation;
 
-    void Start()
+    public bool isOpened = false;
+
+    [SerializeField] private GameObject gemPrefab;
+    [SerializeField] private Transform gemSpawnPoint; // Lugar exacto donde aparecerá
+
+    [SerializeField] private DialogueSystem dialogueSystem;  // Instancia de DialogueSystem
+
+    private int puzzleID = 1;  // PuzzleID para identificar el cofre
+
+    private void Start()
     {
-        audioSource = GetComponent<AudioSource>(); // Obtener AudioSource
+        audioSource = GetComponent<AudioSource>();
+        shakeScript = GetComponent<ChestShake>();
+        originalRotation = transform.localRotation;
+    }
+    void Update()
+    {
+        // Si NO está abierto y NO se está sacudiendo, aplica balanceo suave
+        if (!isOpened && (shakeScript == null || !shakeScript.IsShaking()))
+        {
+            float angle = Mathf.Sin(Time.time * 2f) * 5f; // Ajusta velocidad y amplitud
+            transform.localRotation = originalRotation * Quaternion.Euler(0f, 0f, angle);
+        }
+        else
+        {
+            // Mantiene la rotación fija (evita que siga balanceando)
+            transform.localRotation = originalRotation;
+        }
     }
 
     public void Open()
     {
-        if (isOpened) return; // Evita que se vuelva a abrir
+        if (isOpened) return;
         isOpened = true;
 
-        chestAnimator.SetTrigger("Open"); // Activar animación de apertura
-        PlaySound(openSound); // Reproducir sonido de apertura
-        TriggerParticles(); // Activar partículas
+        chestAnimator.SetTrigger("Open");
+
+        if (lockParticles != null && lockParticles.isPlaying)
+            lockParticles.Stop();
+
+        Instantiate(gemPrefab, gemSpawnPoint.position, gemSpawnPoint.rotation);
+
+        PlaySound(openSound);
+        TriggerParticles();
+
+        // Verifica si es la primera vez que se abre un cofre con éxito
+        if (!DialogueFlags.Instance.HasShownFirstSuccessDialogue(puzzleID))
+        {
+            DialogueFlags.Instance.SetFirstSuccessDialogueShown(puzzleID);
+            // Llama al diálogo de éxito
+            dialogueSystem?.StartTemporaryDialogue(dialogueSystem.successFirstTimeLines); // Usamos la instancia de DialogueSystem
+        }
 
         ChestManager.Instance.OnChestOpened();
     }
     public void RejectKey()
     {
-        if (isOpened) return; // No hacer nada si ya está abierto
+        if (isOpened) return;
 
-        // Llamar al método de agitación del objeto
-        StartShake(); // Inicia la sacudida
-
+        StartShake();
         Debug.Log("Llave incorrecta usada en cofre de color: " + Color);
-
-        // Reproducir sonido de error al usar llave incorrecta
         PlaySound(rejectSound);
+
+        // Verifica si es la primera vez que fallas con la llave
+        if (!DialogueFlags.Instance.HasShownFirstFailureDialogue(puzzleID))
+        {
+            DialogueFlags.Instance.SetFirstFailureDialogueShown(puzzleID);
+            // Llama al diálogo de fracaso
+            dialogueSystem?.StartTemporaryDialogue(dialogueSystem.failureFirstTimeLines); // Usamos la instancia de DialogueSystem
+        }
     }
     public void StartShake()
     {
-        // Asegúrate de que tienes un script ObjectShake en el mismo GameObject o asigna el script de agitación
-        ChestShake shakeScript = GetComponent<ChestShake>();
-
         if (shakeScript != null)
         {
-            shakeScript.StartShake(); // Inicia la sacudida del cofre
+            shakeScript.StartShake();
         }
         else
         {
-            Debug.LogWarning("El script ObjectShake no está asignado.");
+            Debug.LogWarning("El script ChestShake no está asignado.");
         }
     }
     private void PlaySound(AudioClip sound)

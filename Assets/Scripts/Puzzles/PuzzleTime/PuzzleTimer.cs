@@ -21,7 +21,29 @@ public class PuzzleTimer : MonoBehaviour
         puzzlesUIManager.TimerText.gameObject.SetActive(false);
         puzzlesUIManager.TimeOutText.gameObject.SetActive(false);
     }
-
+    public void StartTimer()
+    {
+        if (timeProvider != null && !timeProvider.IsTimeRunning())
+        {
+            timeProvider.StartTimerAfterDialogue();  // Esto asegura que el temporizador se reanude
+        }
+    }
+    public void StartTimerAfterDialogue()
+    {
+        isTimerStarted = true;
+        puzzlesUIManager.TimerText.gameObject.SetActive(true);
+        puzzlesUIManager.TimeOutText.gameObject.SetActive(false);
+    }
+    public void StopTimer()
+    {
+        isTimerStarted = false;  // Esto detiene el temporizador
+        puzzlesUIManager.TimerText.gameObject.SetActive(false); // Oculta el texto del temporizador
+        puzzlesUIManager.TimeOutText.gameObject.SetActive(true); // Muestra el texto de "Tiempo agotado"
+    }
+    public void PauseTimer()
+    {
+        isTimerStarted = false;  // Esto detiene el temporizador
+    }
     private void Update()
     {
         if (timeProvider == null || !timeProvider.IsTimeRunning())

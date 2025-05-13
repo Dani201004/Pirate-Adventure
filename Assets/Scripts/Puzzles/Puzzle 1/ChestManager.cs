@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class ChestManager : MonoBehaviour, ITimeProvider
@@ -26,12 +27,16 @@ public class ChestManager : MonoBehaviour, ITimeProvider
     public delegate void TimeOutHandler();
     public event TimeOutHandler OnTimeOut; // Evento para cuando se agota el tiempo
 
-    [Header("Dialog System")]
+    [Header("Dialogue System")]
     [SerializeField] private DialogueSystem dialogueSystem;
 
     private int totalChests;     // Total de cofres
     private int chestsOpened;    // Cofres abiertos
     private bool puzzleCompleted = false; // Estado para saber si el puzzle ha sido completado
+
+    private int totalGemsCollected = 0;
+
+    private int totalMagicGemsCollected = 0;
 
     private void Awake()
     {
@@ -51,7 +56,32 @@ public class ChestManager : MonoBehaviour, ITimeProvider
         AdjustChestAndKeyVisibility(savedDifficulty);
         PlayDifficultyParticles(savedDifficulty);
 
+        // Limpiar el valor guardado de tiempo al finalizar el puzzle
+        PlayerPrefs.DeleteKey("TimeRemaining");
+
         InitializeChestCounters();
+
+        // Llamar al método repetidamente para comprobar si la partida es online
+        InvokeRepeating("CheckMultiplayerMatchStatus", 0f, 1f); // Cada 1 segundo
+    }
+    private void CheckMultiplayerMatchStatus()
+    {
+        // Solo ejecutar los métodos si la partida es online
+        if (PlayFabController.Instance.IsMultiplayerMatch)
+        {
+            DifficultyLevel savedDifficulty = GetSavedDifficulty();
+            SetDifficultyForAllPlayers(savedDifficulty);
+
+            GetDifficultyFromPlayFab();
+
+            // Detener la comprobación después de ejecutar los métodos
+            CancelInvoke("CheckMultiplayerMatchStatus");
+        }
+    }
+    private void OnDestroy()
+    {
+        // Detener cualquier invocación cuando el objeto sea destruido
+        CancelInvoke("CheckMultiplayerMatchStatus");
     }
     private void InitializeChestCounters()
     {
@@ -81,52 +111,118 @@ public class ChestManager : MonoBehaviour, ITimeProvider
     // Llamar este método cuando un cofre sea abierto
     public void OnChestOpened()
     {
+        totalGemsCollected++;
+
+        // Aumentar el número de gemas normales en PlayFabProgressManager
+        PlayFabProgressManager.Instance.Gems++;
+
+        Debug.Log("Gema normal recolectada. Total actuales: " + PlayFabProgressManager.Instance.Gems);
+
         chestsOpened++;
 
         // Verificar si chestsOpened es igual a totalChests
         Debug.Log("Cofres abiertos: " + chestsOpened + " de " + totalChests);
 
-        // Comprobar si todos los cofres han sido abiertos
-        if (chestsOpened == totalChests && !puzzleCompleted)
+        // Comprobar si el número de gemas instanciadas es igual al número de cofres abiertos
+        GameObject[] gemasInstanciadas = GameObject.FindGameObjectsWithTag("Gem");
+
+        // Verificar si el número de gemas instanciadas es igual al número de cofres abiertos
+        if (totalGemsCollected == totalChests)
         {
-            puzzleCompleted = true;
-            Debug.Log("Puzzle completado!");
-            EndPuzzle(); // Terminar el puzzle
+
+            Debug.Log("Número de gemas instanciadas es igual al número de cofres abiertos.");
+
+            // Verificar si la última gema ha sido destruida
+            bool ultimaGemaDestruida = gemasInstanciadas.Length == 0;
+
+            if (ultimaGemaDestruida && !puzzleCompleted)
+            {
+                totalMagicGemsCollected++;
+
+                // Aumentar el número de gemas normales en PlayFabProgressManager
+                PlayFabProgressManager.Instance.magicGems++;
+
+                puzzleCompleted = true;
+                EndPuzzle(); // Terminar el puzzle
+            }
+        }
+        else
+        {
+            Debug.Log("El número de gemas instanciadas no coincide con los cofres abiertos.");
         }
     }
-    private void EndPuzzle()
+    public void EndPuzzle()
     {
-        // Detener el temporizador
+
+        // Detener el temporizador de ChestManager
         StopTimer();
+
+        // Detener el temporizador de PuzzleTimer (si está presente)
+        PuzzleTimer puzzleTimer = FindObjectOfType<PuzzleTimer>();
+        if (puzzleTimer != null)
+        {
+            puzzleTimer.StopTimer();
+        }
+
+        // Limpiar el valor guardado de tiempo al finalizar el puzzle
+        PlayerPrefs.DeleteKey("TimeRemaining");
 
         // Aquí se inicia el diálogo de éxito cuando se complete el puzzle
         Debug.Log("¡Puzzle completado!");
 
-        // Aumentar el progreso del puzzle
-        PlayFabProgressManager.Instance.puzzleProgress++;
+        // Obtener el valor de currentPuzzle desde PlayFabProgressManager
+        int currentPuzzleID = PlayFabProgressManager.Instance.currentPuzzle;
 
-        // Obtener el nombre del juego actual
-        string currentGameName = PlayerPrefs.GetString("CurrentGameName", "DefaultGame");
+        // Verificar si este puzzle ya ha sido completado
+        if (!PlayFabProgressManager.Instance.completedPuzzles.Contains(currentPuzzleID))
+        {
+            // Aumentar el progreso del puzzle solo si es la primera vez que se pasa
+            PlayFabProgressManager.Instance.puzzleProgress++;
 
-        // Llamar al método SaveGameData para guardar el progreso actualizado
-        PlayFabProgressManager.Instance.SaveGameData(currentGameName);
+            // Registrar este puzzle como completado
+            PlayFabProgressManager.Instance.completedPuzzles.Add(currentPuzzleID);
+        }
 
         // Obtener el componente DialogueSystem
         DialogueSystem dialogueSystem = FindObjectOfType<DialogueSystem>();
 
         // Llamar al método que inicia el diálogo de éxito
         dialogueSystem.StartSuccessDialogue();
-    }
-    private void OnEnable()
-    {
-        // Suscribir al evento para cuando cambie la dificultad
-        DifficultyManager.Instance.OnDifficultyChanged += AdjustChestAndKeyVisibility;
-    }
 
-    private void OnDisable()
+        // Obtener el nombre del juego actual desde PlayFabProgressManager
+        string currentGameName = PlayFabProgressManager.Instance.lastGamePlayed;
+
+        // Si no se encuentra el nombre del juego, usar un valor predeterminado
+        if (string.IsNullOrEmpty(currentGameName))
+        {
+            currentGameName = "DefaultGame"; // Nombre por defecto si no hay ninguno disponible
+        }
+
+        // Guardar el progreso actualizado
+        PlayFabProgressManager.Instance.SaveGameData(currentGameName);
+    }
+    public void StartTimerAfterDialogue()
     {
-        // Desuscribir cuando el script se desactive
-        DifficultyManager.Instance.OnDifficultyChanged -= AdjustChestAndKeyVisibility;
+        ApplyDifficultySettings();
+
+        // Comprobar si hay un tiempo guardado y usarlo
+        if (PlayerPrefs.HasKey("TimeRemaining"))
+        {
+            timeRemaining = PlayerPrefs.GetFloat("TimeRemaining");
+        }
+        else
+        {
+            timeRemaining = totalTime;  // Si no hay un tiempo guardado, usar el tiempo inicial
+        }
+
+        isTimerRunning = true;
+
+        // Asignar este manager como proveedor de tiempo al PuzzleTimer
+        PuzzleTimer puzzleTimer = FindObjectOfType<PuzzleTimer>();
+        if (puzzleTimer != null)
+        {
+            puzzleTimer.SetTimeProvider(this);
+        }
     }
 
     private void ApplyDifficultySettings()
@@ -180,18 +276,7 @@ public class ChestManager : MonoBehaviour, ITimeProvider
     {
         return (System.DateTime.UtcNow - new System.DateTime(1970, 1, 1)).TotalSeconds;
     }
-    public void StartTimerAfterDialogue()
-    {
-        ApplyDifficultySettings();
-        isTimerRunning = true;
 
-        // Asignar este manager como proveedor de tiempo al PuzzleTimer
-        PuzzleTimer puzzleTimer = FindObjectOfType<PuzzleTimer>();
-        if (puzzleTimer != null)
-        {
-            puzzleTimer.SetTimeProvider(this);
-        }
-    }
     private void Update()
     {
         if (isTimerRunning && timeRemaining > 0)
@@ -301,9 +386,40 @@ public class ChestManager : MonoBehaviour, ITimeProvider
         int savedValue = PlayerPrefs.GetInt("SelectedDifficulty", (int)DifficultyLevel.Easy);
         return (DifficultyLevel)savedValue;
     }
+    public void SetDifficultyForAllPlayers(DifficultyLevel difficulty)
+    {
+        // Guardar la dificultad en Shared Group Data para que sea accesible para todos los jugadores
+        PlayFabController.Instance.SetSharedGroupData("difficulty", difficulty.ToString(), // Usar "difficulty" aquí
+            () =>
+            {
+                // Callback de éxito (sin parámetros)
+                //Debug.Log("Dificultad guardada con éxito: " + difficulty);
+            });
+    }
+    private void GetDifficultyFromPlayFab()
+    {
+        PlayFabController.Instance.GetSharedGroupData(sharedData =>
+        {
+            if (sharedData.ContainsKey("difficulty"))
+            {
+                string difficultyString = sharedData["difficulty"];
+                DifficultyLevel difficulty = (DifficultyLevel)Enum.Parse(typeof(DifficultyLevel), difficultyString);
+
+                // Establecer la dificultad en el juego
+                DifficultyManager.Instance.SetDifficulty(difficulty);
+
+                // Ajustar cofres y llaves según la dificultad
+                AdjustChestAndKeyVisibility(difficulty);
+                PlayDifficultyParticles(difficulty);
+            }
+        });
+    }
+
     // Método para detener el temporizador
     public void StopTimer()
     {
+        // Guardar el tiempo restante antes de detener el temporizador
+        PlayerPrefs.SetFloat("TimeRemaining", timeRemaining);
         isTimerRunning = false;  // Detener el temporizador
     }
 }

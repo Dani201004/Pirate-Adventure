@@ -7,7 +7,7 @@ using System;
 
 public class LanguageManager : MonoBehaviour
 {
-    private static LanguageManager _instance;
+    public static LanguageManager _instance;
 
     // Crear un evento para notificar a los demás scripts cuando el idioma cambia
     public static event Action OnLanguageChanged;

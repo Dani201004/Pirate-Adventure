@@ -13,7 +13,6 @@ public class LoadingScreen : MonoBehaviour
     // Array de consejos en inglés
     private string[] consejosIngles = new string[]
     {
-        "Remember to save your game!",
         "We're preparing something fun for you!",
         "Take a deep breath... We're almost there!",
         "Loading fun... hang on, champion.",
@@ -27,7 +26,6 @@ public class LoadingScreen : MonoBehaviour
     // Array de consejos en español
     private string[] consejosEspañol = new string[]
     {
-        "¡Recuerda guardar partida!",
         "¡Estamos preparando algo divertido para ti!",
         "Respira hondo... ¡Ya casi estamos!",
         "Cargando diversión... paciencia, campeón.",
@@ -46,18 +44,30 @@ public class LoadingScreen : MonoBehaviour
             return;
         }
 
-        StartCoroutine(CambiarConsejo());
+        // Suscribirse al evento de cambio de idioma
+        LanguageManager.OnLanguageChanged += UpdateAdviceText;
+
+        // Inicializar los consejos en el idioma actual
+        UpdateAdviceText(); // This will call CambiarConsejo with the correct advice array
+
         StartCoroutine(FadeTextCoroutine(loadingText)); // Inicia el desvanecimiento del texto de carga
     }
-
-    private IEnumerator CambiarConsejo()
+    private void UpdateAdviceText()
     {
-        // Detecta el idioma del jugador (0 = Inglés, 1 = Español)
+        // Obtener el idioma del jugador (0 = Inglés, 1 = Español)
         int idioma = PlayerPrefs.GetInt("LocaleKey", 0);  // Valor por defecto es 0 (Inglés)
 
         // Elige el array de consejos según el idioma
         string[] consejos = idioma == 0 ? consejosIngles : consejosEspañol;
 
+        // Detener la coroutine anterior si está corriendo
+        StopCoroutine(CambiarConsejo(consejos));
+
+        // Iniciar la coroutine para cambiar los consejos en el idioma correcto
+        StartCoroutine(CambiarConsejo(consejos));
+    }
+    private IEnumerator CambiarConsejo(string[] consejos)
+    {
         while (true)
         {
             // Selecciona un consejo aleatorio del array según el idioma

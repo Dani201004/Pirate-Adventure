@@ -1,6 +1,5 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using System.Collections.Generic;
 using System.Collections;
 
 
@@ -79,9 +78,26 @@ public class MenuController : MonoBehaviour
     //Ir al menú de amigos
     public void Social()
     {
+        // Sobrescribe siempre el índice anterior
+        PlayerPrefs.SetInt("PreviousSceneIndex", SceneManager.GetActiveScene().buildIndex);
+
+        // Ir a la escena Social
         SceneManager.LoadScene(6);
     }
-
+    public void ReturnToPreviousScene()
+    {
+        if (PlayerPrefs.HasKey("PreviousSceneIndex"))
+        {
+            int previousIndex = PlayerPrefs.GetInt("PreviousSceneIndex");
+            PlayerPrefs.DeleteKey("PreviousSceneIndex"); // Borrar justo después de usarlo
+            SceneManager.LoadScene(previousIndex);
+        }
+        else
+        {
+            Debug.LogWarning("No se encontró la escena anterior. Volviendo al menú principal.");
+            MainMenu();
+        }
+    }
     //Salir del puzzle
     public void ExitLevel()
     {

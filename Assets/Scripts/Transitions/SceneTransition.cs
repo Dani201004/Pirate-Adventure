@@ -41,6 +41,7 @@ public class SceneTransition : MonoBehaviour
         {
             childCanvas.gameObject.SetActive(true);
         }
+
         StartCoroutine(LoadSceneSave(gameName));
     }
 
@@ -75,28 +76,6 @@ public class SceneTransition : MonoBehaviour
             yield return null;
         }
 
-        // Verificar si los datos de la partida han sido cargados.
-        // Aquí se hace referencia a PlayFabProgressManager.Instance.puzzleProgress para determinarlo.
-        if (PlayFabProgressManager.Instance.puzzleProgress == 0)
-        {
-            Debug.Log("Datos de la partida no encontrados; cargando datos...");
-            // Se llama al método LoadGameData del PlayFabProgressManager.
-            PlayFabProgressManager.Instance.LoadGameData(gameName);
-            yield return new WaitForSeconds(1f);
-        }
-        // Asegurarse de que la instancia de PuzzleButtonsStateManager esté lista
-        if (PuzzleButtonsStateManager.Instance != null)
-        {
-            // Llamar a SetGameName para establecer el nombre de la partida
-            PuzzleButtonsStateManager.Instance.SetGameName(gameName);
-        }
-
-        // Ahora que la escena está cargada, determinamos el puzzleId basado en la escena actual.
-        string puzzleId = GetPuzzleIdForCurrentScene();
-
-        // Llamar a SetCurrentPuzzleId con el puzzleId correspondiente.
-        playFabController.SetCurrentPuzzleId(puzzleId);
-
         yield return new WaitForSeconds(1f);
         transitionAnim.SetTrigger("Start");
 
@@ -106,7 +85,6 @@ public class SceneTransition : MonoBehaviour
             childCanvas.gameObject.SetActive(false);
         }
     }
-
     public void LoadLevelNewGame()
     {
         if (childCanvas != null)
@@ -128,7 +106,7 @@ public class SceneTransition : MonoBehaviour
         yield return new WaitForSeconds(1f);
 
         // Cargar la siguiente escena de manera asíncrona sin activarla aún
-        operation = SceneManager.LoadSceneAsync(8);
+        operation = SceneManager.LoadSceneAsync(2);
         operation.allowSceneActivation = false;
 
         yield return new WaitForSeconds(7f);
@@ -146,12 +124,6 @@ public class SceneTransition : MonoBehaviour
             yield return null;
         }
 
-        // Ahora que la escena está cargada, determinamos el puzzleId basado en la escena actual.
-        string puzzleId = GetPuzzleIdForCurrentScene();
-
-        // Llamar a SetCurrentPuzzleId con el puzzleId correspondiente.
-        playFabController.SetCurrentPuzzleId(puzzleId);
-
         yield return new WaitForSeconds(1f);
         transitionAnim.SetTrigger("Start");
 
@@ -161,21 +133,7 @@ public class SceneTransition : MonoBehaviour
             childCanvas.gameObject.SetActive(false);
         }
     }
-    // Determinar el puzzleId basado en el índice de la escena actual
-    private string GetPuzzleIdForCurrentScene()
-    {
-        int currentSceneIndex = SceneManager.GetActiveScene().buildIndex;
 
-        switch (currentSceneIndex)
-        {
-            case 8: return "Puzzle 1";
-            case 10: return "Puzzle 2";
-            case 11: return "Puzzle 3";
-            case 12: return "Puzzle 4";
-            case 13: return "Puzzle 5";
-            default: return "DefaultPuzzle"; // Puzzle por defecto si no coincide
-        }
-    }
     public void LoadLevelMainMenu()
     {
         if (childCanvas != null)

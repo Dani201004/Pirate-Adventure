@@ -5,23 +5,27 @@ public class DragAndDrop : MonoBehaviour
     private Vector3 offset;
     private bool isDragging = false;
 
+    private Key keyComponent;
+
     // Esto se ejecuta cuando el usuario toca o hace clic en el objeto
     private void OnMouseDown()
     {
-        // Calculamos el offset para que el objeto se mantenga en la misma posición relativa cuando sea arrastrado
         offset = transform.position - Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, Camera.main.WorldToScreenPoint(transform.position).z));
-
         isDragging = true;
 
-        // Desactivar la colisión entre la llave y los cofres durante el drag
-        Collider keyCollider = GetComponent<Collider>();  // Asumimos que usas un Collider 3D
-        Collider[] hitColliders = Physics.OverlapSphere(transform.position, 0.5f); // Colisiones cercanas
+        keyComponent = GetComponent<Key>();
+        if (keyComponent != null)
+        {
+            keyComponent.Select(); // Activar brillo al seleccionar
+        }
+
+        Collider keyCollider = GetComponent<Collider>();
+        Collider[] hitColliders = Physics.OverlapSphere(transform.position, 0.5f);
 
         foreach (var hitCollider in hitColliders)
         {
             if (hitCollider.CompareTag("Cofre"))
             {
-                // Desactivar la colisión entre la llave y el cofre mientras se arrastra
                 Physics.IgnoreCollision(hitCollider, keyCollider, true);
             }
         }
@@ -55,31 +59,32 @@ public class DragAndDrop : MonoBehaviour
     // Esto se ejecuta cuando se suelta el ratón o el toque
     private void OnDragEnd()
     {
-        if (MenuController.IsPaused)  // Si el juego está en pausa, no ejecutamos nada
+        if (MenuController.IsPaused)
         {
             return;
         }
 
         isDragging = false;
 
-        // Restaurar la colisión entre la llave y los cofres cuando se suelta la llave
-        Collider keyCollider = GetComponent<Collider>();  // Asumimos que usas un Collider 3D
-        Collider[] hitColliders = Physics.OverlapSphere(transform.position, 0.5f); // Colisiones cercanas
+        if (keyComponent != null)
+        {
+            keyComponent.Deselect(); // Desactivar brillo al soltar
+        }
+
+        Collider keyCollider = GetComponent<Collider>();
+        Collider[] hitColliders = Physics.OverlapSphere(transform.position, 0.5f);
 
         foreach (var hitCollider in hitColliders)
         {
             if (hitCollider.CompareTag("Cofre"))
             {
-                // Restaurar la colisión entre la llave y el cofre después de soltarla
                 Physics.IgnoreCollision(hitCollider, keyCollider, false);
             }
         }
 
-        // Al soltar el objeto, verificamos que tiene el componente Key
         Key key = GetComponent<Key>();
         if (key != null)
         {
-            // Llamamos a la función de verificación de Key
             key.CheckForMatchingChest();
         }
     }

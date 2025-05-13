@@ -30116,10 +30116,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   puzzlesUIManager: {fileID: 0}
-  timerText: {fileID: 710915753}
-  timeOutText: {fileID: 1327690480}
-  retryPanel: {fileID: 1366776008}
-  pauseButton: {fileID: 1984714042}
   delayBeforePanel: 2
 --- !u!1 &367564499
 GameObject:
@@ -61342,6 +61338,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   dialoguePanel: {fileID: 141004975}
   dialogueText: {fileID: 1505203706}
+  presentationDialogueLines: []
   dialogueLines:
   - m_TableReference:
       m_TableCollectionName: GUID:d3246f8aac07af345aec3ed2a0fcb25b
@@ -61360,6 +61357,9 @@ MonoBehaviour:
     m_FallbackState: 0
     m_WaitForCompletion: 0
     m_LocalVariables: []
+  successFirstTimeLines: []
+  failureFirstTimeLines: []
+  hintLines: []
   typingSpeed: 0.03
   audioSource: {fileID: 899938027}
   typingSound: {fileID: 8300000, guid: 1ade98269096a564887e56784ce8cc0b, type: 3}
@@ -61753,8 +61753,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 50
-  m_fontSizeBase: 50
+  m_fontSize: 44
+  m_fontSizeBase: 44
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -61821,8 +61821,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -269.3918, y: -179}
-  m_SizeDelta: {x: 472.0301, y: 50}
+  m_AnchoredPosition: {x: -269.3918, y: -185.8776}
+  m_SizeDelta: {x: 472.0301, y: 67.022}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1057973310
 GameObject:
@@ -66958,10 +66958,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d111f5d765c3b9146a4102aa54837cfb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  onlineButton: {fileID: 1806415192}
+  timerText: {fileID: 0}
+  timeOutText: {fileID: 0}
+  hintButton: {fileID: 0}
   pauseMenu: {fileID: 533490870}
+  pauseButton: {fileID: 0}
+  onlineButton: {fileID: 1806415192}
   notOnlineImage: {fileID: 673646686}
   onlineImage: {fileID: 1892299057}
+  retryPanel: {fileID: 0}
   retryButton: {fileID: 1417309964}
   retryVoteText: {fileID: 1057952189}
 --- !u!4 &1089748556

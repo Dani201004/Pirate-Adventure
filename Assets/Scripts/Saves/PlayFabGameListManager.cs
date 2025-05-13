@@ -90,9 +90,8 @@ public class PlayFabGameListManager : MonoBehaviour
             Debug.LogWarning("No se encontró el objeto 'SavesUIManager' en la escena.");
         }
 
-        yield return new WaitForSeconds(0.2f);
+        LoadSavedGames();
 
-        
     }
     void OnEnable()
     {
@@ -115,8 +114,6 @@ public class PlayFabGameListManager : MonoBehaviour
         if (SceneManager.GetActiveScene().buildIndex == 1)
         {
             StartCoroutine(FindSavesUIManagerAfterDelay());
-
-            LoadSavedGames();
         }
     }
 
@@ -185,7 +182,9 @@ public class PlayFabGameListManager : MonoBehaviour
         PlayFabClientAPI.UpdateUserData(request, result =>
         {
             savedGames.Add(gameName);
-      
+
+            PlayFabProgressManager.Instance.SetCurrentGame(gameName);
+            PlayFabProgressManager.Instance.SaveGameData(gameName);
 
             // Solo después de guardar los datos, cambiamos de escena
             OnNewGame();
@@ -276,6 +275,29 @@ public class PlayFabGameListManager : MonoBehaviour
             }
 
             // Buscar y asignar el texto de las gemas mágicas
+            TextMeshProUGUI GemsText = entry.transform.Find("GemsQuantitytext")?.GetComponent<TextMeshProUGUI>();
+            if (GemsText != null)
+            {
+                GetGems(gameName, Gems =>
+                {
+                    // Obtener el idioma actual desde LanguageManager
+                    int localeID = PlayerPrefs.GetInt("LocaleKey", 0);  // 0 es el valor por defecto
+                    string text = "";
+
+                    // Comprobar el idioma y asignar el texto correspondiente
+                    if (localeID == 0) // Suponiendo que 0 es para ingles
+                    {
+                        text = "Gems: " + Gems.ToString();
+                    }
+                    else if (localeID == 1) // Suponiendo que 1 es para español
+                    {
+                        text = "Gemas: " + Gems.ToString();
+                    }
+
+                    GemsText.text = text;
+                });
+            }
+            // Buscar y asignar el texto de las gemas mágicas
             TextMeshProUGUI magicGemsText = entry.transform.Find("MagicGemsQuantitytext")?.GetComponent<TextMeshProUGUI>();
             if (magicGemsText != null)
             {
@@ -298,7 +320,6 @@ public class PlayFabGameListManager : MonoBehaviour
                     magicGemsText.text = text;
                 });
             }
-
             // Asignar el botón de selección de partida
             Button entryButton = entry.GetComponent<Button>();
             if (entryButton != null)
@@ -325,7 +346,7 @@ public class PlayFabGameListManager : MonoBehaviour
                 }
                 else
                 {
-                    Debug.LogWarning("No se encontró la imagen para el juego: " + gameName);
+                    Debug.LogError("No se encontró la imagen para el juego: " + gameName);
                     // Aquí puedes asignar una imagen por defecto si lo deseas
                 }
             }
@@ -352,15 +373,16 @@ public class PlayFabGameListManager : MonoBehaviour
             callback(0); // En caso de error, se asume progreso 0
         });
     }
-
-    private void GetMagicGems(string gameName, System.Action<int> callback)
+    private void GetGems(string gameName, System.Action<int> callback)
     {
         var request = new GetUserDataRequest();
         PlayFabClientAPI.GetUserData(request, result =>
         {
-            if (result.Data != null && result.Data.ContainsKey("MagicGems_" + gameName))
+            string key = "Gems_" + gameName;
+
+            if (result.Data != null && result.Data.ContainsKey(key))
             {
-                int gems = int.Parse(result.Data["MagicGems_" + gameName].Value);
+                int gems = int.Parse(result.Data[key].Value);
                 callback(gems);
             }
             else
@@ -369,26 +391,74 @@ public class PlayFabGameListManager : MonoBehaviour
             }
         }, error =>
         {
+            Debug.LogError("Error al cargar las gemas para " + gameName + ": " + error.GenerateErrorReport());
+            callback(0);
+        });
+    }
+    private void GetMagicGems(string gameName, System.Action<int> callback)
+    {
+        var request = new GetUserDataRequest();
+        PlayFabClientAPI.GetUserData(request, result =>
+        {
+            string key = "MagicGems_" + gameName;
+
+            if (result.Data != null && result.Data.ContainsKey(key))
+            {
+                int gems = int.Parse(result.Data[key].Value);
+                callback(gems);
+            }
+            else
+            {
+                callback(0); // Si no hay datos, se asume 0 gemas mágicas
+            }
+        }, error =>
+        {
             Debug.LogError("Error al cargar las gemas mágicas para " + gameName + ": " + error.GenerateErrorReport());
-            callback(0); // En caso de error, se asume 0 gemas
+            callback(0);
         });
     }
 
     // Al seleccionar una partida, se llama a PlayFabProgressManager para cargar los datos asociados
     private void OnGameSelected(string gameName)
     {
-        // Luego pasa puzzleId al método de transición.
-        SceneTransition.Instance.LoadLevelSave(gameName);
+        // Guardamos el nombre de la partida en el manager local
+        PlayFabProgressManager.Instance.SetCurrentGame(gameName);
+
+        // Subimos el valor a los User Data de PlayFab
+        var request = new PlayFab.ClientModels.UpdateUserDataRequest
+        {
+            Data = new Dictionary<string, string>
+        {
+            { "LastGamePlayed", gameName }
+        }
+        };
+
+        PlayFab.PlayFabClientAPI.UpdateUserData(request, result =>
+        {
+            Debug.Log("LastGamePlayed actualizado en PlayFab: " + gameName);
+
+            // Ahora que ya está actualizado, pasamos a la escena
+            SceneTransition.Instance.LoadLevelSave(gameName);
+        },
+        error =>
+        {
+            Debug.LogError("Error al actualizar LastGamePlayed en PlayFab: " + error.GenerateErrorReport());
+        });
     }
+
     // Método para borrar una partida
     private void OnDeleteGame(string gameName)
     {
     // Eliminar todas las claves asociadas con la partida
     var keysToRemove = new List<string>
     {
+        "CompletedPuzzles_" + gameName,
         "GameName_" + gameName,
         "PuzzleProgress_" + gameName,
-        "MagicGems_" + gameName
+        "Gems_" + gameName,
+        "MagicGems_" + gameName,
+        "SilverTrophies_" + gameName,
+        "GoldTrophies_" + gameName,
     };
 
     var request = new UpdateUserDataRequest
@@ -422,6 +492,9 @@ public class PlayFabGameListManager : MonoBehaviour
     {
         mainMenuUIManager.Error2Panel.SetActive(false);
         mainMenuUIManager.NewGamePanel.SetActive(false);
+        mainMenuUIManager.PrincipalButtons.SetActive(true);
+        mainMenuUIManager.SocialButton.gameObject.SetActive(true);
+        mainMenuUIManager.SettingsButton.SetActive(true);
     }
     public void HideError3Panel()
     {

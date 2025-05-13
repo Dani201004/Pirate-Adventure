@@ -2,19 +2,39 @@ using UnityEngine;
 
 public class Piece : MonoBehaviour
 {
-    private int xCoordinate;
-    private int yCoordinate;
+    private Vector2Int currentCoord;
+    private Vector2Int correctCoord;
 
-    // Establecer las coordenadas de la pieza
-    public void SetCoordinates(int x, int y)
+    // Propiedad para almacenar un identificador único de la pieza
+    public int Id { get; private set; }
+
+    // Método para asignar un ID único a la pieza
+    public void SetId(int id)
     {
-        xCoordinate = x;
-        yCoordinate = y;
+        Id = id;
+    }
+    public void SetCurrentCoordinates(int x, int y)
+    {
+        currentCoord = new Vector2Int(x, y);
     }
 
-    // Obtener las coordenadas de la pieza
-    public Vector2 GetCoordinates()
+    public void UpdateCurrentCoordinates(int x, int y)
     {
-        return new Vector2(xCoordinate, yCoordinate);
+        currentCoord = new Vector2Int(x, y);
+    }
+
+    public Vector2Int GetCurrentCoordinates()
+    {
+        return currentCoord;
+    }
+
+    public void SetCorrectCoordinates(int x, int y)
+    {
+        correctCoord = new Vector2Int(x, y);
+    }
+
+    public Vector2Int GetCorrectCoordinates()
+    {
+        return correctCoord;
     }
 }

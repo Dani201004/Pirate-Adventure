@@ -2,50 +2,70 @@ using UnityEngine;
 
 public class Key : MonoBehaviour
 {
-    [SerializeField] public string Color;  // Color de la llave, debe coincidir con el del cofre correspondiente
-    public bool isKeyUsed = false; // Verifica si la llave ya fue utilizada correctamente
-    private Vector3 originalPosition; // Almacena la posición original de la llave
-    [SerializeField] private float detectionRange = 1.0f; // Rango de detección para verificar la proximidad al cofre
+    [SerializeField] public string Color;
+    public bool isKeyUsed = false;
+    private Vector3 originalPosition;
+    [SerializeField] private float detectionRange = 1.0f;
+
+    [Header("Aura Effect")]
+    [SerializeField] private GameObject auraObject; // Asigna el objeto del aura desde el Inspector
 
     private void Start()
     {
-        // Guardar la posición original de la llave al iniciar
         originalPosition = transform.position;
 
+        if (auraObject != null)
+        {
+            auraObject.SetActive(false); // Asegúrate de que empieza desactivada
+        }
+    }
+
+    public void Select()
+    {
+        if (auraObject != null)
+        {
+            auraObject.SetActive(true);
+        }
+    }
+
+    public void Deselect()
+    {
+        if (auraObject != null)
+        {
+            auraObject.SetActive(false);
+        }
     }
 
     public void CheckForMatchingChest()
     {
-        if (isKeyUsed) return; // Si la llave ya fue utilizada, no hacer nada
+        if (isKeyUsed) return;
 
-        // Obtener los cofres activos según la dificultad
         Chest[] chests = GetActiveChests();
         bool isCorrectChest = false;
 
         foreach (var chest in chests)
         {
-            // Verificar si la llave está dentro del rango de detección del cofre
             if (Vector3.Distance(transform.position, chest.transform.position) <= detectionRange)
             {
                 if (chest.Color == Color && !chest.isOpened)
                 {
                     isCorrectChest = true;
+
+                    SyncKeyUseWithOtherPlayers(Color, chest.transform.position);
+
                     OpenChest();
                     isKeyUsed = true;
 
-                    SyncKeyUseWithOtherPlayers(Color, chest.transform.position);
                     Debug.Log("¡Llave correcta! El cofre se ha abierto.");
                     break;
                 }
                 else if (!chest.isOpened)
                 {
-                    // Si está cerca pero no coincide el color, reproducir animación de rechazo
                     chest.RejectKey();
                 }
             }
         }
 
-        // Si la llave no está en el cofre correcto, vuelve a su posición original
         if (!isCorrectChest)
         {
             transform.position = originalPosition;
@@ -65,7 +85,18 @@ public class Key : MonoBehaviour
             {
                 chest.Open();
                 isKeyUsed = true;
-                Destroy(gameObject);
+
+                // Solo destruir la llave si no es multijugador
+                if (!PlayFabController.Instance.IsMultiplayerMatch)
+                {
+                    Destroy(gameObject);
+                    Debug.Log("Se elimina la llave (modo individual)");
+                }
+                else
+                {
+                    Debug.Log("Llave no se elimina aún (modo multijugador)");
+                }
+
                 break;
             }
         }

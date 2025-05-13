@@ -63,6 +63,9 @@ public class PlayFabController : MonoBehaviour
     [Header("Comprobacion para saber si eres el creador de la lobby o no")]
     private bool isHost = false;
 
+    // Propiedad pública para acceder al valor de isHost
+    public bool IsHost => isHost;
+
     [Header("ID como usuario multijugador")]
     public static MultiplayerEntityKey MyEntityKey;
 
@@ -75,6 +78,9 @@ public class PlayFabController : MonoBehaviour
 
     [Header("Lista de jugadores en la partida")]
     private List<string> CurrentLobbyMemberIds = new List<string>();
+
+    [Header("Booleana para que el puzzle de la llave sepa si es online o no")]
+    public bool IsMultiplayerMatch { get; private set; }
 
     // ================================================
     //       INICIALIZACIÓN Y CICLO DE VIDA DE LA ESCENA
@@ -133,9 +139,10 @@ public class PlayFabController : MonoBehaviour
         // Si se vuelve al menú principal (escena 0), cerramos la lobby si existe
         if (SceneManager.GetActiveScene().buildIndex == 0 && !string.IsNullOrEmpty(CurrentLobbyId))
         {
-            DeleteLobby(CurrentLobbyId);
+            DeleteAllLobbies();
             RemoveConnectionString();
             RemoveSharedGroupId();
+            ClearPuzzleId();
         }
     }
     private IEnumerator FindMainMenuUIManagerAfterDelay()
@@ -328,7 +335,7 @@ public class PlayFabController : MonoBehaviour
         {
             string playerName = PlayerPrefs.GetString("PlayerName");
 
-            Debug.Log("PlayerName exists, displaying device ID and friends list");
+            //Debug.Log("PlayerName exists, displaying device ID and friends list");
 
             mainMenuUIManager.NamePanel.SetActive(false);
             mainMenuUIManager.PrincipalButtons.SetActive(true);
@@ -510,7 +517,7 @@ public class PlayFabController : MonoBehaviour
 
         // Mostrar el nombre en vez del ID
         socialUIManager.DeviceIdText.text = "ID: " + playerName;
-        Debug.Log("Nombre del jugador mostrado en UI: " + playerName);
+        //Debug.Log("Nombre del jugador mostrado en UI: " + playerName);
     }
 
     // ================================================
@@ -934,7 +941,7 @@ public class PlayFabController : MonoBehaviour
     // Método que se llama cuando se obtiene la lista de amigos con éxito
     private void OnGetFriendsListSuccess(GetFriendsListResult result)
     {
-        Debug.Log("Lista de amigos obtenida con éxito!");
+        //Debug.Log("Lista de amigos obtenida con éxito!");
 
         // Verifica si hay amigos en la respuesta
         if (result.Friends == null || result.Friends.Count == 0)
@@ -1069,7 +1076,7 @@ public class PlayFabController : MonoBehaviour
     //          MÉTODOS DE MULTIJUGADOR (LOBBY)
     // ================================================
 
-    public void JoinRoom(string connectionString)
+    public void JoinRoom(string connectionString, string friendPlayFabId)
     {
         if (string.IsNullOrEmpty(connectionString))
         {
@@ -1121,104 +1128,127 @@ public class PlayFabController : MonoBehaviour
 
                         // Guardar esa lista para futuras comprobaciones
                         SetLobbyMembers(memberIds);
+
+                        PlayFabController.Instance.IsMultiplayerMatch = true;
+
+                        LoadPuzzleIdFromUserData(friendPlayFabId);
                     }
                     else
                     {
                         Debug.LogWarning("No se encontraron miembros en el lobby.");
                     }
 
-                    // Cargar la escena del puzzle
-                    LoadPuzzleSceneFromSharedGroup();
                 },
                 OnError);
         },
         OnError);
     }
-
     public void MakeGameOnline()
     {
-        // Deshabilitar el botón mientras se crea el lobby
-        puzzlesUIManager.OnlineButton.interactable = false;
 
-        puzzlesUIManager.NotOnlineImage.gameObject.SetActive(false);
+            // Deshabilitar el botón mientras se crea el lobby
+            puzzlesUIManager.OnlineButton.interactable = false;
 
-        puzzlesUIManager.OnlineImage.gameObject.SetActive(true);
+            puzzlesUIManager.NotOnlineImage.gameObject.SetActive(false);
+            puzzlesUIManager.OnlineImage.gameObject.SetActive(true);
 
-        // Definir la clave de entidad del jugador para el cliente
-        var clientEntityKey = new ClientEntityKey
-        {
-            Id = MyEntityKey.Id,
-            Type = MyEntityKey.Type
-        };
+            // Obtener el nombre de la escena activa para asignar el puzzleId correspondiente
+            string currentSceneName = SceneManager.GetActiveScene().name;
 
-        // Crear un nuevo EntityKey para Multiplayer basado en el ClientEntityKey
-        var multiplayerEntityKey = new MultiplayerEntityKey
-        {
-            Id = clientEntityKey.Id,
-            Type = clientEntityKey.Type
-        };
+            // Llamamos a Get2PuzzleIdBasedOnScene para obtener el puzzleId basado en la escena
+            currentPuzzleId = GetPuzzleIdBasedOnScene(currentSceneName);
+            Debug.Log("Puzzle ID asignado basado en la escena: " + currentPuzzleId);
 
-        // Crear el objeto que representa al propietario del lobby
-        var ownerEntityKey = multiplayerEntityKey;
-
-        // Generar el SharedGroupId antes de crear el lobby
-        sharedGroupId = System.Guid.NewGuid().ToString();
-        Debug.Log("SharedGroupId generado: " + sharedGroupId);
-
-        // Crear la solicitud para el lobby
-        var request = new CreateLobbyRequest
-        {
-            Owner = ownerEntityKey,
-            MaxPlayers = 4,
-            AccessPolicy = AccessPolicy.Public,
-            UseConnections = true,
-            Members = new List<Member> { new Member { MemberEntity = ownerEntityKey } }
-        };
-
-        Debug.Log("Creando lobby con la siguiente solicitud: " + JsonUtility.ToJson(request));
-
-        // Crear el lobby usando la API de PlayFab
-        PlayFabMultiplayerAPI.CreateLobby(request,
-            result =>
+            // Asegúrate de que currentPuzzleId no esté vacío
+            if (string.IsNullOrEmpty(currentPuzzleId))
             {
-                if (result != null && !string.IsNullOrEmpty(result.ConnectionString))
+                Debug.LogError("currentPuzzleId está vacío. No se puede continuar.");
+                return; // Termina el método si el puzzleId es inválido
+            }
+
+            // Definir la clave de entidad del jugador para el cliente
+            var clientEntityKey = new ClientEntityKey
+            {
+                Id = MyEntityKey.Id,
+                Type = MyEntityKey.Type
+            };
+
+            // Crear un nuevo EntityKey para Multiplayer basado en el ClientEntityKey
+            var multiplayerEntityKey = new MultiplayerEntityKey
+            {
+                Id = clientEntityKey.Id,
+                Type = clientEntityKey.Type
+            };
+
+            // Crear el objeto que representa al propietario del lobby
+            var ownerEntityKey = multiplayerEntityKey;
+
+            // Generar el SharedGroupId antes de crear el lobby
+            sharedGroupId = System.Guid.NewGuid().ToString();
+
+            // Crear la solicitud para el lobby
+            var request = new CreateLobbyRequest
+            {
+                Owner = ownerEntityKey,
+                MaxPlayers = 4,
+                AccessPolicy = AccessPolicy.Public,
+                UseConnections = true,
+                Members = new List<Member> { new Member { MemberEntity = ownerEntityKey } }
+            };
+
+            Debug.Log("Creando lobby con la siguiente solicitud: " + JsonUtility.ToJson(request));
+
+            // Crear el lobby usando la API de PlayFab
+            PlayFabMultiplayerAPI.CreateLobby(request,
+                result =>
                 {
-                    string connectionString = result.ConnectionString;
-                    CurrentLobbyId = result.LobbyId;
-                    Debug.Log("Lobby creado con éxito! ConnectionString: " + connectionString);
-
-                    // Actualizar la lista de miembros del lobby (aquí solo es el host por ahora)
-                    SetLobbyMembers(new List<string> { MyEntityKey.Id });
-
-                    // Ahora crea el grupo compartido usando el SharedGroupId generado
-                    CreateSharedGroup(() =>
+                    if (result != null && !string.IsNullOrEmpty(result.ConnectionString))
                     {
-                        // Una vez que el SharedGroup ha sido creado correctamente, puedes guardar los datos del puzzle
-                        SaveCurrentPuzzleToSharedGroup(currentPuzzleId);  // Usar el puzzle ID actual
+                        string connectionString = result.ConnectionString;
+                        CurrentLobbyId = result.LobbyId;
+                        Debug.Log("Lobby creado con éxito! ConnectionString: " + connectionString);
 
-                        // Guarda ConnectionString y SharedGroupId en el perfil del jugador
-                        SaveConnectionString(connectionString, sharedGroupId);
+                        // Establecer isHost a true ya que este jugador es el host
+                        PlayFabController.Instance.isHost = true;
 
-                        SetCurrentPuzzleId(currentPuzzleId); // Aquí actualizas el puzzleId
-                    });
+                        // Actualizar la lista de miembros del lobby (aquí solo es el host por ahora)
+                        SetLobbyMembers(new List<string> { MyEntityKey.Id });
 
-                }
-                else
+                        // Ahora crea el grupo compartido usando el SharedGroupId generado
+                        CreateSharedGroup(() =>
+                        {
+                            // Crear y guardar el puzzleId
+                            SavePuzzleIdToUserData(currentPuzzleId);
+
+                            // Guarda ConnectionString y SharedGroupId en el perfil del jugador
+                            SaveConnectionString(connectionString, sharedGroupId);
+
+                            PlayFabController.Instance.IsMultiplayerMatch = true;
+                        });
+
+                    }
+                    else
+                    {
+                        Debug.LogError("Error: La creación del lobby no devolvió una ConnectionString válida.");
+                    }
+                },
+                error =>
                 {
-                    Debug.LogError("Error: La creación del lobby no devolvió una ConnectionString válida.");
-                }
-            },
-            error =>
-            {
-                Debug.LogError("Error al crear la partida online: " + error.ErrorMessage);
+                    Debug.LogError("Error al crear la partida online: " + error.ErrorMessage);
 
-                // Volver a habilitar el botón si ocurre un error
-                puzzlesUIManager.OnlineButton.interactable = true;
-            });
+                    // Volver a habilitar el botón si ocurre un error
+                    puzzlesUIManager.OnlineButton.interactable = true;
+                });      
     }
 
     public void SaveConnectionString(string connectionString, string sharedGroupId)
     {
+        if (string.IsNullOrEmpty(connectionString) || string.IsNullOrEmpty(sharedGroupId))
+        {
+            Debug.LogError("No se puede guardar: connectionString o sharedGroupId es nulo o vacío.");
+            return;
+        }
+
         var request = new UpdateUserDataRequest
         {
             Data = new Dictionary<string, string>
@@ -1267,7 +1297,7 @@ public class PlayFabController : MonoBehaviour
                     Debug.Log("SharedGroupId sincronizado: " + sharedGroupId);
                 }
 
-                StartCoroutine(WaitAndJoinLobby(friendConnectionString));
+                StartCoroutine(WaitAndJoinLobby(friendConnectionString, friendPlayFabId));
             }
             else
             {
@@ -1285,13 +1315,40 @@ public class PlayFabController : MonoBehaviour
         isCooldownActive = false; // Desactivamos el cooldown
     }
 
-    IEnumerator WaitAndJoinLobby(string connectionString)
+    IEnumerator WaitAndJoinLobby(string connectionString, string friendPlayFabId)
     {
         yield return new WaitForSeconds(1); // Esperar 1 segundos antes de intentar unirse
-        JoinRoom(connectionString);
+        JoinRoom(connectionString, friendPlayFabId);
     }
 
+    public void DeleteAllLobbies()
+    {
+        // Obtener todas las lobbies creadas por este jugador
+        PlayFabClientAPI.GetUserData(new GetUserDataRequest(),
+            result =>
+            {
+                List<string> lobbyIdsToDelete = new List<string>();
 
+                // Filtra todas las claves que comienzan con "CreatedLobby_"
+                foreach (var entry in result.Data)
+                {
+                    if (entry.Key.StartsWith("CreatedLobby_"))
+                    {
+                        lobbyIdsToDelete.Add(entry.Value.Value);
+                    }
+                }
+
+                // Elimina cada lobby encontrada
+                foreach (string lobbyId in lobbyIdsToDelete)
+                {
+                    DeleteLobby(lobbyId);
+                }
+            },
+            error =>
+            {
+                Debug.LogError("Error al obtener los datos del usuario: " + error.ErrorMessage);
+            });
+    }
     public void DeleteLobby(string lobbyId)
     {
         var request = new DeleteLobbyRequest
@@ -1390,11 +1447,11 @@ public class PlayFabController : MonoBehaviour
     // Método de ciclo de vida: cuando la aplicación se cierra
     private void OnApplicationQuit()
     {
+        // Realizar limpieza cuando el juego se cierra o cuando el jugador sale
         RemoveSharedGroupId();
-
-        OnPlayerLeave();
-
-        CloseLobbyIfHost();
+        DeleteAllLobbies();
+        OnPlayerLeave(); // El jugador abandona la partida
+        CloseLobbyIfHost(); // Cerrar el lobby si el jugador es el host
     }
 
     // Método de ciclo de vida: cuando la aplicación se pone en pausa
@@ -1402,7 +1459,8 @@ public class PlayFabController : MonoBehaviour
     {
         if (pauseStatus)
         {
-            CloseLobbyIfHost();  // Solo cerrar lobby si el jugador es el host
+            // Solo cerrar el lobby si el jugador es el host
+            CloseLobbyIfHost();
         }
     }
 
@@ -1413,8 +1471,8 @@ public class PlayFabController : MonoBehaviour
         {
             Debug.Log("Cerrando el lobby porque el host salió del juego...");
 
-            OnPlayerLeave();
-            // Solicitar eliminación del lobby en PlayFab
+            OnPlayerLeave(); // El jugador host ha salido, por lo que debe abandonar el lobby
+                             // Solicitar eliminación del lobby en PlayFab
             var request = new DeleteLobbyRequest
             {
                 LobbyId = CurrentLobbyId
@@ -1428,7 +1486,10 @@ public class PlayFabController : MonoBehaviour
 
                     // Eliminar ConnectionString de los datos del jugador
                     RemoveConnectionString(true); // Aquí pasamos true para indicar que se ha cerrado el lobby
-                    RemoveSharedGroupId();
+                    RemoveSharedGroupId(); // Eliminar SharedGroupId
+                    ClearPuzzleId();
+
+                    PlayFabController.Instance.IsMultiplayerMatch = false;
                 },
                 error =>
                 {
@@ -1453,7 +1514,7 @@ public class PlayFabController : MonoBehaviour
             // Dejar el lobby si el jugador no es el host
             if (!string.IsNullOrEmpty(CurrentLobbyId))
             {
-                LeaveLobby();  // Deja el lobby
+                LeaveLobby();  // El jugador abandona el lobby
             }
 
             // Actualizar la lista de miembros después de que el jugador haya salido
@@ -1461,12 +1522,20 @@ public class PlayFabController : MonoBehaviour
 
             // Eliminar el ConnectionString del jugador
             RemoveConnectionString();
+
+            // Eliminar el SharedGroupId
+            RemoveSharedGroupId();
+
+            ClearPuzzleId();
+
+            PlayFabController.Instance.IsMultiplayerMatch = false;
         }
     }
     public void LeaveLobby()
     {
         if (string.IsNullOrEmpty(CurrentLobbyId))
         {
+            // Si no se encuentra el LobbyId, no hacer nada
             Debug.LogError("No se encontró el LobbyId.");
             return;
         }
@@ -1486,7 +1555,9 @@ public class PlayFabController : MonoBehaviour
             result =>
             {
                 Debug.Log("Jugador ha dejado el lobby exitosamente.");
-                // Aquí puedes realizar cualquier limpieza o actualizaciones necesarias
+
+                // Actualizar la lista de miembros del lobby tras la salida
+                SetLobbyMembers(CurrentLobbyMemberIds.Where(id => id != MyEntityKey.Id).ToList());
             },
             error =>
             {
@@ -1505,7 +1576,6 @@ public class PlayFabController : MonoBehaviour
             SharedGroupId = sharedGroupId
         };
 
-        // Realizamos la solicitud para crear el Shared Group
         PlayFabClientAPI.CreateSharedGroup(request, result =>
         {
             // Se ejecuta si el Shared Group se crea correctamente
@@ -1530,8 +1600,9 @@ public class PlayFabController : MonoBehaviour
         var req = new UpdateSharedGroupDataRequest
         {
             SharedGroupId = sharedGroupId,
-            Data = new Dictionary<string, string> { { key, value } }
+            Data = new Dictionary<string, string> { { key, value } },
         };
+
         PlayFabClientAPI.UpdateSharedGroupData(req, res =>
         {
             Debug.Log($"SharedGroupData updated: {key} = {value}");
@@ -1539,6 +1610,7 @@ public class PlayFabController : MonoBehaviour
         },
         err => Debug.LogError("UpdateSharedGroupData: " + err.GenerateErrorReport()));
     }
+
     // Método similar para borrar SharedGroupId, si lo necesitas
     public void RemoveSharedGroupId()
     {
@@ -1557,74 +1629,127 @@ public class PlayFabController : MonoBehaviour
                 Debug.LogError("Error al eliminar SharedGroupId: " + updateError.ErrorMessage);
             });
     }
-    public void SetCurrentPuzzleId(string puzzleId)
-    {
-        currentPuzzleId = puzzleId;
-        Debug.Log("Puzzle seleccionado: " + currentPuzzleId);
-    }
 
-    public void SaveCurrentPuzzleToSharedGroup(string puzzleId)
+    public void SavePuzzleIdToUserData(string puzzleId)
     {
-        var data = new Dictionary<string, string> {
-        { "CurrentPuzzleId", puzzleId }
-    };
+        if (string.IsNullOrEmpty(puzzleId))
+        {
+            Debug.LogWarning("El PuzzleId está vacío o nulo. No se puede guardar.");
+            return;
+        }
 
-        PlayFabClientAPI.UpdateSharedGroupData(new UpdateSharedGroupDataRequest
+        Debug.Log("Guardando PuzzleId: " + puzzleId);  // Depuración para verificar el valor antes de guardar
+
+        var request = new UpdateUserDataRequest
         {
-            SharedGroupId = sharedGroupId,
-            Data = data
-        },
-        result => {
-            Debug.Log("Puzzle actual guardado en SharedGroup: " + puzzleId);
-        },
-        error => {
-            Debug.LogError("Error al guardar puzzle actual en SharedGroup: " + error.GenerateErrorReport());
-        });
-    }
-    public void LoadPuzzleSceneFromSharedGroup()
-    {
-        PlayFabClientAPI.GetSharedGroupData(new GetSharedGroupDataRequest
+            Data = new Dictionary<string, string>
         {
-            SharedGroupId = sharedGroupId
+            { "PuzzleId", puzzleId }  // Guardar el PuzzleId en los datos del jugador
         },
-        result =>
-        {
-            if (result.Data.TryGetValue("CurrentPuzzleId", out var puzzleEntry))
+            Permission = UserDataPermission.Public  // O cualquier otro tipo de permiso que prefieras
+        };
+
+        PlayFabClientAPI.UpdateUserData(request,
+            result =>
             {
-                string puzzleId = puzzleEntry.Value;
-                int sceneIndex = GetSceneIndexFromPuzzleId(puzzleId);
-
-                Debug.Log("Cargando escena del puzzle: " + puzzleId + " (índice: " + sceneIndex + ")");
-                SceneTransition.Instance.LoadLevelJoinRoom(sceneIndex);  // Pasamos el índice de la escena
-            }
-            else
+                // Depuración para verificar si la solicitud fue exitosa
+                Debug.Log("PuzzleId guardado en los datos del jugador: " + puzzleId);
+            },
+            error =>
             {
-                Debug.LogWarning("No se encontró CurrentPuzzleId en el SharedGroup. Cargando escena por defecto.");
-                SceneTransition.Instance.LoadLevelJoinRoom(8); // Escena por defecto si no se encuentra el puzzle
-            }
-        },
-        error =>
-        {
-            Debug.LogError("Error al obtener CurrentPuzzleId desde SharedGroup: " + error.GenerateErrorReport());
-        });
+                Debug.LogError("Error al guardar el PuzzleId: " + error.GenerateErrorReport());
+            });
     }
-    // Método para obtener el índice de la escena basado en el puzzleId
-    private int GetSceneIndexFromPuzzleId(string puzzleId)
+    // Método para cargar el PuzzleId de un jugador
+    public void LoadPuzzleIdFromUserData(string friendPlayFabId)
     {
-        switch (puzzleId)
+        if (string.IsNullOrEmpty(friendPlayFabId))
         {
-            case "Puzzle1":
-                return 8;
-            case "Puzzle2":
-                return 10;
-            case "Puzzle3":
-                return 11;
-            case "Puzzle4":
-                return 12;
-            case "Puzzle5":
-                return 13;
+            Debug.LogError("PlayFabId vacío o inválido.");
+            return;  // Detener la solicitud si el PlayFabId no es válido
+        }
+
+        var request = new GetUserDataRequest
+        {
+            PlayFabId = friendPlayFabId
+        };
+
+        PlayFabClientAPI.GetUserData(request,
+            result =>
+            {
+                if (result.Data != null)
+                {
+                    if (result.Data.ContainsKey("PuzzleId"))
+                    {
+                        string puzzleId = result.Data["PuzzleId"].Value;
+                        Debug.Log("PuzzleId cargado desde los datos del jugador: " + puzzleId);
+
+                        // Usa el puzzleId para cargar la escena correspondiente
+                        string sceneName = GetPuzzleIdBasedOnScene(puzzleId);
+                        SceneManager.LoadScene(sceneName);
+                    }
+                    else
+                    {
+                        Debug.LogWarning("No se encontró PuzzleId en los datos del jugador.");
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning("No se encontraron datos de usuario.");
+                }
+            },
+            error =>
+            {
+                Debug.LogError("Error al cargar el PuzzleId: " + error.GenerateErrorReport());
+                if (error.HttpCode == 400)
+                {
+                    Debug.LogError("Código de error 400: Bad Request. Asegúrate de que el PlayFabId es correcto.");
+                }
+            });
+    }
+    public void ClearPuzzleId()
+    {
+        // Accede al PlayFabId directamente desde PlayFabController
+        string playFabId = PlayFabController.PlayFabId;  // Usamos la propiedad PlayFabId estática
+
+        if (string.IsNullOrEmpty(playFabId))
+        {
+            Debug.LogError("PlayFabId no está asignado.");
+            return;
+        }
+
+        // Crea la solicitud para borrar PuzzleId
+        var request = new UpdateUserDataRequest
+        {
+            KeysToRemove = new List<string> { "PuzzleId" }  // Añadimos "PuzzleId" a la lista de claves a eliminar
+        };
+
+        // Llamada a la API de PlayFab para actualizar los datos del jugador
+        PlayFabClientAPI.UpdateUserData(request,
+            result =>
+            {
+                Debug.Log("PuzzleId borrado correctamente.");
+            },
+            error =>
+            {
+                Debug.LogError("Error al borrar el PuzzleId: " + error.GenerateErrorReport());
+            });
+    }
+    private string GetPuzzleIdBasedOnScene(string currentSceneName)
+    {
+        // Asignar el puzzleId basado en el nombre de la escena
+        switch (currentSceneName)
+        {
+            case "Puzzle 1":  // Nombre de la escena
+                return "Puzzle 1";  // Devuelve el puzzleId para Puzzle 1
+            case "Puzzle 2":
+                return "Puzzle 2";
+            case "Puzzle 3":
+                return "Puzzle 3";
+            case "Puzzle 4":
+                return "Puzzle 4";
             default:
-                return 8;  // Escena por defecto si no se encuentra el puzzle
+                return "DefaultPuzzle";  // Devuelve un puzzleId por defecto si no se encuentra la escena
         }
     }
     // Función para obtener datos del grupo compartido
@@ -1634,9 +1759,23 @@ public class PlayFabController : MonoBehaviour
         PlayFabClientAPI.GetSharedGroupData(req, res =>
         {
             var data = new Dictionary<string, string>();
-            foreach (var kv in res.Data)
-                data[kv.Key] = kv.Value.Value;
-            callback?.Invoke(data);
+
+            if (res.Data != null && res.Data.Count > 0)
+            {
+                foreach (var kv in res.Data)
+                {
+                    // Asegúrate de que el valor no sea null
+                    if (kv.Value != null && kv.Value.Value != null)
+                    {
+                        data[kv.Key] = kv.Value.Value;
+                    }
+                }
+                callback?.Invoke(data);
+            }
+            else
+            {
+                Debug.LogWarning("No shared group data found.");
+            }
         },
         err => Debug.LogError("GetSharedGroupData: " + err.GenerateErrorReport()));
     }
@@ -1644,7 +1783,8 @@ public class PlayFabController : MonoBehaviour
     {
         string playerId = PlayFabId;
 
-        if (!string.IsNullOrEmpty(sharedGroupId))
+        // Comprobamos si la partida es multijugador
+        if (IsMultiplayerMatch)
         {
             SetSharedGroupData($"retry_vote_{playerId}", "1", CheckAllPlayersVotedRetry);
         }
@@ -1665,10 +1805,13 @@ public class PlayFabController : MonoBehaviour
 
             Debug.Log($"Votes: {votes}/{total}");
 
-            // Mostrar el recuento en la UI
+            // Comprobar el idioma actual desde LanguageManager
+            string votesText = GetVotesText(votes, total);
+
+            // Mostrar el texto de los votos en el idioma actual
             if (puzzlesUIManager.RetryVoteText != null)
             {
-                puzzlesUIManager.RetryVoteText.text = $"Votos para reintentar: {votes}/{total}";
+                puzzlesUIManager.RetryVoteText.text = votesText;
             }
 
             if (votes >= Mathf.CeilToInt(total / 2f))  // Mitad o más (maneja impares también)
@@ -1676,6 +1819,22 @@ public class PlayFabController : MonoBehaviour
                 ResetVotesAndRetry();
             }
         });
+    }
+    private string GetVotesText(int votes, int total)
+    {
+        // Obtener el idioma actual desde LanguageManager
+        int currentLanguage = LanguageManager.CurrentLanguage;
+
+        // Generar el texto de los votos dependiendo del idioma
+        switch (currentLanguage)
+        {
+            case 0: // Inglés
+                return $"Votes: {votes}/{total}";
+            case 1: // Español
+                return $"Votos: {votes}/{total}";
+            default:
+                return $"Votes: {votes}/{total}"; // Por defecto en inglés
+        }
     }
 
     // Método para reiniciar la partida y reintentar
@@ -1701,8 +1860,10 @@ public class PlayFabController : MonoBehaviour
     // ================================================
     private string SerializeVector(Vector3 v)
     {
-        // Usamos la cultura actual para que el formato coincida con el que se guarda en PlayFab (por ejemplo, "1,80,2,45,1,55")
-        return $"{v.x.ToString("F2", CultureInfo.CurrentCulture)},{v.y.ToString("F2", CultureInfo.CurrentCulture)},{v.z.ToString("F2", CultureInfo.CurrentCulture)}";
+        // Usa "." como separador decimal sin importar la cultura del sistema
+        return $"{v.x.ToString("F2", CultureInfo.InvariantCulture)}," +
+               $"{v.y.ToString("F2", CultureInfo.InvariantCulture)}," +
+               $"{v.z.ToString("F2", CultureInfo.InvariantCulture)}";
     }
 
     // Función para enviar el evento de uso de llave
@@ -1710,7 +1871,7 @@ public class PlayFabController : MonoBehaviour
     {
         if (string.IsNullOrEmpty(sharedGroupId))
         {
-            Debug.LogError("Error: sharedGroupId no está inicializado.");
+            //Debug.LogError("Error: sharedGroupId no está inicializado.");
             return;
         }
 
@@ -1721,11 +1882,8 @@ public class PlayFabController : MonoBehaviour
             return;
         }
 
-        if (position == null)
-        {
-            Debug.LogError("Error: position no está definido.");
-            return;
-        }
+        // Serializa la posición a una cadena de texto, por ejemplo: "x,y,z"
+        string serializedPosition = SerializeVector(position);
 
         var request = new ExecuteCloudScriptRequest
         {
@@ -1734,38 +1892,54 @@ public class PlayFabController : MonoBehaviour
             {
                 sharedGroupId = sharedGroupId,
                 color = color,
-                position = SerializeVector(position)  // Asegúrate de que la conversión de posición sea correcta
+                position = serializedPosition  // Enviar la posición serializada
             },
             GeneratePlayStreamEvent = false
         };
 
         PlayFabClientAPI.ExecuteCloudScript(request,
-            result =>
-            {
-                // Imprime toda la respuesta para ver qué datos contiene
-                Debug.Log("Respuesta del servidor: " + result.FunctionResult);
+      result =>
+      {
+          // Imprime toda la respuesta para ver qué datos contiene
+          Debug.Log("Respuesta del servidor: " + result.FunctionResult);
 
-                if (result.FunctionResult is Dictionary<string, object> response)
-                {
-                    // Verifica si contiene los datos esperados
-                    if (response.ContainsKey("updatedData"))
-                    {
-                        Debug.Log($"Evento enviado al servidor correctamente: {response["updatedData"]}");
-                    }
-                    else
-                    {
-                        Debug.LogWarning("La respuesta no contiene datos útiles.");
-                    }
-                }
-                else
-                {
-                    Debug.LogWarning("La respuesta no tiene el formato esperado.");
-                }
-            },
-            error =>
-            {
-                Debug.LogError("Error al ejecutar CloudScript: " + error.GenerateErrorReport());
-            });
+          // Deserializamos correctamente la respuesta
+          if (result.FunctionResult is Dictionary<string, object> response)
+          {
+              if (response.ContainsKey("updatedData"))
+              {
+                  var updatedData = response["updatedData"] as Dictionary<string, object>;
+                  if (updatedData != null && updatedData.ContainsKey(color + "|" + serializedPosition))
+                  {
+                      string chestStatus = updatedData[color + "|" + serializedPosition] as string;
+                      if (chestStatus == "cofre abierto")
+                      {
+                          Debug.Log($"Evento enviado al servidor correctamente: {chestStatus}");
+                      }
+                      else
+                      {
+                          Debug.LogWarning("El estado del cofre no es 'cofre abierto'.");
+                      }
+                  }
+                  else
+                  {
+                      Debug.LogWarning("No se encontraron datos actualizados para la clave " + color + "|" + serializedPosition);
+                  }
+              }
+              else
+              {
+                  Debug.LogWarning("La respuesta no contiene el campo 'updatedData'.");
+              }
+          }
+          else
+          {
+              //Debug.LogWarning("La respuesta no tiene el formato esperado.");
+          }
+      },
+      error =>
+      {
+          Debug.LogError("Error al ejecutar CloudScript: " + error.GenerateErrorReport());
+      });
     }
 
     // ================================================

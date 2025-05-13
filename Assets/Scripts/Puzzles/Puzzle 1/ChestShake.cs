@@ -43,4 +43,9 @@ public class ChestShake : MonoBehaviour
     {
         shakeTime = shakeDuration;
     }
+    // Función para saber si aún está sacudiéndose
+    public bool IsShaking()
+    {
+        return shakeTime > 0f;
+    }
 }

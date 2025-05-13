@@ -6,6 +6,7 @@ TagManager:
   tags:
   - IDText
   - Cofre
+  - Gem
   layers:
   - Default
   - TransparentFX

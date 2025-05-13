@@ -11,7 +11,6 @@ public class SoundManager : MonoBehaviour
     [SerializeField] private SettingsUIManager settingsUIManager;
 
     [SerializeField] private AudioMixer mixer;
-    [SerializeField] private AudioSource musicSource;
 
     private const string MusicVolumeKey = "musicVolume";
     private const string EffectsVolumeKey = "effectsVolume";

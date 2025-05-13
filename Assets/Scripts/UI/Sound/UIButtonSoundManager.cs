@@ -36,22 +36,23 @@ public class UIButtonSoundManager : MonoBehaviour
 
     private void AssignSoundToAllButtons()
     {
-        List<Button> allButtons = new List<Button>();
-        Canvas[] allCanvases = Resources.FindObjectsOfTypeAll<Canvas>();
+        Button[] allButtons = Resources.FindObjectsOfTypeAll<Button>();
 
-        foreach (Canvas canvas in allCanvases)
+        int count = 0;
+        foreach (Button btn in allButtons)
         {
-            if (canvas.gameObject.hideFlags == HideFlags.NotEditable || canvas.gameObject.hideFlags == HideFlags.HideAndDontSave)
+            if (btn.gameObject.hideFlags == HideFlags.NotEditable || btn.gameObject.hideFlags == HideFlags.HideAndDontSave)
                 continue;
 
-            Button[] buttons = canvas.GetComponentsInChildren<Button>(true); // true incluye inactivos
-            foreach (Button btn in buttons)
-            {
-                btn.onClick.RemoveListener(PlayClickSound); // Evita duplicados
-                btn.onClick.AddListener(PlayClickSound);
-                allButtons.Add(btn);
-            }
+            // Evitar botones que no estén en la escena activa
+            if (!btn.gameObject.scene.IsValid() || !btn.gameObject.scene.isLoaded)
+                continue;
+
+            btn.onClick.RemoveListener(PlayClickSound);
+            btn.onClick.AddListener(PlayClickSound);
+            count++;
         }
+
 
         //Debug.Log($"Botones actualizados: {allButtons.Count}");
     }
